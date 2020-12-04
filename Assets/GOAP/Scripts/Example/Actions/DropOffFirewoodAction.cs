@@ -2,6 +2,8 @@
 using System;
 using UnityEngine;
 
+namespace Goap.Action
+{
 public class DropOffFirewoodAction : GoapAction
 {
 	private bool droppedOffFirewood = false;
@@ -71,4 +73,6 @@ public class DropOffFirewoodAction : GoapAction
 		
 		return true;
 	}
+}
+
 }

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+using Goap.Action;
 public class TestNumAi : MonoBehaviour
 {
     public GameObject Target;

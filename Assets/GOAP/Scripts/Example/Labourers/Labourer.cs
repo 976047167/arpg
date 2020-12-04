@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-
+using Goap;
+using Goap.Action;
 
 /**
  * A general labourer class.

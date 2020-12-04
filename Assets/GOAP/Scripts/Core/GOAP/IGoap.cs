@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections;
 
@@ -7,73 +8,76 @@ using System.Collections;
  */
 using System.Collections.Generic;
 
-
-/**
- * Any agent that wants to use GOAP must implement
- * this interface. It provides information to the GOAP
- * planner so it can plan what actions to use.
- * 
- * It also provides an interface for the planner to give 
- * feedback to the Agent and report success/failure.
- */
-public interface IGoap
+namespace Goap
 {
-	/**
-	 * The starting state of the Agent and the world.
-	 * Supply what states are needed for actions to run.
-	 */
-	Dictionary<string,bool> getWorldState ();
-
-	/**
-	 * Give the planner a new goal so it can figure out 
-	 * the actions needed to fulfill it.
-	 */
-    Dictionary<string, bool> createGoalState();
-
+using Action;
 
     /**
-     * Get blackboard for environment
+     * Any agent that wants to use GOAP must implement
+     * this interface. It provides information to the GOAP
+     * planner so it can plan what actions to use.
+     * 
+     * It also provides an interface for the planner to give 
+     * feedback to the Agent and report success/failure.
      */
-    BlackBoard GetBlackBoard();
+    public interface IGoap
+    {
+        /**
+         * The starting state of the Agent and the world.
+         * Supply what states are needed for actions to run.
+         */
+        Dictionary<string, bool> getWorldState();
 
-	/**
-	 * No sequence of actions could be found for the supplied goal.
-	 * You will need to try another goal
-	 */
-    void planFailed(Dictionary<string, bool> failedGoal);
+        /**
+         * Give the planner a new goal so it can figure out 
+         * the actions needed to fulfill it.
+         */
+        Dictionary<string, bool> createGoalState();
 
-	/**
-	 * A plan was found for the supplied goal.
-	 * These are the actions the Agent will perform, in order.
-	 */
-	void planFound (KeyValuePair<string,bool> goal, Queue<GoapAction> actions);
 
-	/**
-	 * All actions are complete and the goal was reached. Hooray!
-	 */
-	void actionsFinished ();
+        /**
+         * Get blackboard for environment
+         */
+        BlackBoard GetBlackBoard();
 
-	/**
-	 * One of the actions caused the plan to abort.
-	 * That action is returned.
-	 */
-	void planAborted (GoapAction aborter);
+        /**
+         * No sequence of actions could be found for the supplied goal.
+         * You will need to try another goal
+         */
+        void planFailed(Dictionary<string, bool> failedGoal);
 
-	/**
-	 * Called during Update. Move the agent towards the target in order
-	 * for the next action to be able to perform.
-	 * Return true if the Agent is at the target and the next action can perform.
-	 * False if it is not there yet.
-	 */
-	bool moveAgent(GoapAction nextAction);
+        /**
+         * A plan was found for the supplied goal.
+         * These are the actions the Agent will perform, in order.
+         */
+        void planFound(KeyValuePair<string, bool> goal, Queue<GoapAction> actions);
 
-    void Init();
-    void Tick();
-    void Release();
+        /**
+         * All actions are complete and the goal was reached. Hooray!
+         */
+        void actionsFinished();
 
-    /// <summary>
-    /// save agent instance
-    /// </summary>
-    IAgent Agent { get; set; } 
+        /**
+         * One of the actions caused the plan to abort.
+         * That action is returned.
+         */
+        void planAborted(GoapAction aborter);
+
+        /**
+         * Called during Update. Move the agent towards the target in order
+         * for the next action to be able to perform.
+         * Return true if the Agent is at the target and the next action can perform.
+         * False if it is not there yet.
+         */
+        bool moveAgent(GoapAction nextAction);
+
+        void Init();
+        void Tick();
+        void Release();
+
+        /// <summary>
+        /// save agent instance
+        /// </summary>
+        IAgent Agent { get; set; }
+    }
 }
-

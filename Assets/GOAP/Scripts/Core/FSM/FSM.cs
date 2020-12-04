@@ -9,7 +9,6 @@ using System.Collections;
  * States should push other states onto the stack 
  * and pop themselves off.
  */
-using System;
 
 
 public class FSM {
