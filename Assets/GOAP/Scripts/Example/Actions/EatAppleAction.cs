@@ -26,7 +26,7 @@ namespace Goap.Action
             return eated;
         }
 
-        public override bool checkProceduralPrecondition(GameObject agent, BlackBoard bb)
+        public override bool checkProceduralPrecondition(GameObject agent, DataBag bb)
         {
             // find the nearest tree that we can chop
             AppleTreeComponet[] trees = (AppleTreeComponet[])bb.GetData("appleTree");
@@ -62,7 +62,7 @@ namespace Goap.Action
             return closest != null && closest.AppleNum > 0;
         }
 
-        public override bool perform(GameObject agent, BlackBoard bb)
+        public override bool perform(GameObject agent, DataBag bb)
         {
             if (startTime == 0)
                 startTime = Time.time;

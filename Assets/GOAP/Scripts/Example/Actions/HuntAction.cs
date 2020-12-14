@@ -39,7 +39,7 @@ namespace Goap.Action
             return true; // yes we need to be near a rock
         }
 
-        public override bool checkProceduralPrecondition(GameObject agent, BlackBoard bb)
+        public override bool checkProceduralPrecondition(GameObject agent, DataBag bb)
         {
             WolfDen[] dens = bb.GetData("wolfDen") as WolfDen[];
             WolfDen closest = null;
@@ -76,7 +76,7 @@ namespace Goap.Action
             return closest != null;
         }
 
-        public override bool perform(GameObject agent, BlackBoard bb)
+        public override bool perform(GameObject agent, DataBag bb)
         {
             if (startTime == 0)
                 startTime = Time.time;

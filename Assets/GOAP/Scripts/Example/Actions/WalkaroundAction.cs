@@ -29,7 +29,7 @@ namespace Goap.Action
             return true;
         }
 
-        public override bool checkProceduralPrecondition(GameObject agent, BlackBoard bb)
+        public override bool checkProceduralPrecondition(GameObject agent, DataBag bb)
         {
             if (_walkTarget == null)
             {
@@ -48,7 +48,7 @@ namespace Goap.Action
             _walkTarget.transform.position += new Vector3(Random.Range(-5, 5), 0, Random.Range(-5, 5));
         }
 
-        public override bool perform(GameObject agent, BlackBoard bb)
+        public override bool perform(GameObject agent, DataBag bb)
         {
             RandomTarget(agent);
 

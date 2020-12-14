@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Goap
 {
 
-    public class BlackBoard
+    public class DataBag
     {
         Dictionary<string, object> _data = new Dictionary<string, object>();
         Dictionary<string, object[]> _datas = new Dictionary<string, object[]>();

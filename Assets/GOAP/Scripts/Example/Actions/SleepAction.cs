@@ -26,7 +26,7 @@ namespace Goap.Action
             return sleeped;
         }
 
-        public override bool checkProceduralPrecondition(GameObject agent, BlackBoard bb)
+        public override bool checkProceduralPrecondition(GameObject agent, DataBag bb)
         {
             CampComponent[] c = bb.GetData("camp") as CampComponent[];
             if (c == null || c.Length <= 0)
@@ -36,7 +36,7 @@ namespace Goap.Action
             return camp != null;
         }
 
-        public override bool perform(GameObject agent, BlackBoard bb)
+        public override bool perform(GameObject agent, DataBag bb)
         {
             if (startTime == 0)
                 startTime = Time.time;

@@ -33,7 +33,7 @@ public class DropOffFirewoodAction : GoapAction
 		return true; // yes we need to be near a supply pile so we can drop off the firewood
 	}
 	
-	public override bool checkProceduralPrecondition (GameObject agent,BlackBoard bb)
+	public override bool checkProceduralPrecondition (GameObject agent,DataBag bb)
 	{
 		// find the nearest supply pile that has spare firewood
         SupplyPileComponent[] supplyPiles = (SupplyPileComponent[])bb.GetData("supplyPiles");
@@ -64,7 +64,7 @@ public class DropOffFirewoodAction : GoapAction
 		return closest != null;
 	}
 
-    public override bool perform(GameObject agent, BlackBoard bb)
+    public override bool perform(GameObject agent, DataBag bb)
 	{
 		BackpackComponent backpack = (BackpackComponent)agent.GetComponent(typeof(BackpackComponent));
 		targetSupplyPile.numFirewood += backpack.numFirewood;

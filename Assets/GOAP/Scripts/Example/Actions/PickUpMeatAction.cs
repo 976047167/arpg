@@ -32,7 +32,7 @@ namespace Goap.Action
             return true; // yes we need to be near a supply pile so we can pick up the logs
         }
 
-        public override bool checkProceduralPrecondition(GameObject agent, BlackBoard bb)
+        public override bool checkProceduralPrecondition(GameObject agent, DataBag bb)
         {
             // find the nearest supply pile that has spare logs
             SupplyPileComponent[] supplyPiles = (SupplyPileComponent[])bb.GetData("supplyPiles");
@@ -71,7 +71,7 @@ namespace Goap.Action
             return closest != null;
         }
 
-        public override bool perform(GameObject agent, BlackBoard bb)
+        public override bool perform(GameObject agent, DataBag bb)
         {
             if (targetSupplyPile.numMeat > 0)
             {

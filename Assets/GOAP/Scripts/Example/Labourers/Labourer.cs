@@ -15,6 +15,7 @@ public abstract class Labourer : MonoBehaviour, IGoap
 	public BackpackComponent backpack;
 	public float moveSpeed = 1;
     public bool EnableLog = false;
+	private DataBag bb = new DataBag();
 
 	void Start ()
 	{
@@ -42,9 +43,8 @@ public abstract class Labourer : MonoBehaviour, IGoap
 		return worldData;
 	}
 
-    BlackBoard bb = new BlackBoard();
 
-    public BlackBoard GetBlackBoard()
+    public DataBag GetBlackBoard()
     {
         return bb;
     }

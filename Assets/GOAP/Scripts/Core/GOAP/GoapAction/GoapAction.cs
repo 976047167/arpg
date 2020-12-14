@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Goap.Action
 {
-    public abstract class GoapAction 
+    public abstract  class GoapAction 
     {
 
 
@@ -23,11 +23,18 @@ namespace Goap.Action
             return Cost;
         }
 
-        /* The risk of performing the action. */
+		/// <summary>
+		/// 风险
+		/// </summary>
         public float Risk = 0f;
-        /* The Benefits of performing the action. */
+		/// <summary>
+		/// 回报
+		/// </summary>
         public float Return = 1f;
-        /* Figure out a weight that suits the action. */
+		/// <summary>
+		/// 权重
+		/// </summary>
+		/// <returns></returns>
         public virtual float GetWeight()
         {
             return (1 - Risk) * Return;
@@ -50,14 +57,6 @@ namespace Goap.Action
             reset();
         }
 
-        /// <summary>
-        /// ��ȡĿ������
-        /// </summary>
-        /// <returns></returns>
-        public virtual Vector3 GetTargetPos()
-        {
-            return target.transform.position;
-        }
 
         /**
          * Reset any variables that need to be reset before planning happens again.
@@ -69,48 +68,35 @@ namespace Goap.Action
          */
         public abstract bool isDone();
 
-        /**
-         * Procedurally check if this action can run. Not all actions
-         * will need this, but some might.
-         */
+		/// <summary>
+		/// 检测当前agent是否符合动作条件
+		/// </summary>
+		/// <param name="agent"></param>
+		/// <returns></returns>
         public abstract bool checkProceduralPrecondition(GoapAgent agent);
 
-        /**
-         * Run the action.
-         * Returns True if the action performed successfully or false
-         * if something happened and it can no longer perform. In this case
-         * the action queue should clear out and the goal cannot be reached.
-         */
-        public abstract bool perform(GoapAgent agent);
+		/// <summary>
+		/// 让agent执行当前action
+		/// </summary>
+		/// <param name="agent"></param>
+		/// <returns></returns>
+        public abstract IEnumerator<bool> createPerformance(GoapAgent agent);
 
-        /**
-         * Does this action need to be within range of a target game object?
-         * If not then the moveTo state will not need to run for this action.
-         */
-        public abstract bool requiresInRange();
-
-
-        /**
-         * Are we in range of the target?
-         * The MoveTo state will set this and it gets reset each time this action is performed.
-         */
-        public bool isInRange()
-        {
-            return inRange;
-        }
-
-        public void setInRange(bool inRange)
-        {
-            this.inRange = inRange;
-        }
-
-
+		/// <summary>
+		/// <para>添加先决条件的键值对</para>
+		/// <para>仅用于planer决策时使用</para>
+		/// </summary>
+		/// <param name="key">键</param>
+		/// <param name="value">值</param>
         public void addPrecondition(string key, bool value)
         {
             preconditions.Add(key, value);
         }
 
-
+		/// <summary>
+		/// 移除先决条件
+		/// </summary>
+		/// <param name="key">键</param>
         public void removePrecondition(string key)
         {
             if (preconditions.ContainsKey(key))
@@ -118,12 +104,22 @@ namespace Goap.Action
         }
 
 
+		/// <summary>
+		/// <para> 添加加动作完成后造成的后果</para>
+		/// <para>仅用于planer决策时使用</para>
+		/// </summary>
+		/// <param name="key">键</param>
+		/// <param name="value">值</param>
         public void addEffect(string key, bool value)
         {
             effects.Add(key, value);
         }
 
 
+		/// <summary>
+		/// 移除造成后果
+		/// </summary>
+		/// <param name="key">键</param>
         public void removeEffect(string key)
         {
             if (effects.ContainsKey(key))

@@ -38,7 +38,7 @@ using Action;
         /**
          * Get blackboard for environment
          */
-        BlackBoard GetBlackBoard();
+        DataBag GetBlackBoard();
 
         /**
          * No sequence of actions could be found for the supplied goal.

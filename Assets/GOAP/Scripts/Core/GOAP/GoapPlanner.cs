@@ -10,7 +10,7 @@ namespace Goap
      * Plans what actions can be completed in order to fulfill a goal state.
      */
 
-    public class GoapPlanner
+    internal class GoapPlanner
     {
         /// <summary>
         /// 计算可行方案

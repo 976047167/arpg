@@ -37,7 +37,7 @@ namespace Goap.Action
             return true; // yes we need to be near a rock
         }
 
-        public override bool checkProceduralPrecondition(GameObject agent, BlackBoard bb)
+        public override bool checkProceduralPrecondition(GameObject agent, DataBag bb)
         {
             // find the nearest rock that we can mine
             IronRockComponent[] rocks = bb.GetData("ironRock") as IronRockComponent[];
@@ -70,7 +70,7 @@ namespace Goap.Action
             return closest != null;
         }
 
-        public override bool perform(GameObject agent, BlackBoard bb)
+        public override bool perform(GameObject agent, DataBag bb)
         {
             if (startTime == 0)
                 startTime = Time.time;

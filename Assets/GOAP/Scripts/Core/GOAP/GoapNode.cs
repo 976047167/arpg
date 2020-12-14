@@ -11,7 +11,7 @@ namespace Goap
      * Used for building up the graph and holding the running costs of actions.
      */
 
-    public class GoapNode
+    internal class GoapNode
     {
         private static int MaxID;
         public int ID;
@@ -66,7 +66,7 @@ namespace Goap
         }
     }
 
-    public class NodeManager
+    internal class NodeManager
     {
         static Stack<GoapNode> _usedNodes = new Stack<GoapNode>();
         static Stack<GoapNode> _freeNodes = new Stack<GoapNode>();
