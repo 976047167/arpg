@@ -10,7 +10,7 @@ namespace Goap
         Dictionary<string, object> _data = new Dictionary<string, object>();
         Dictionary<string, object[]> _datas = new Dictionary<string, object[]>();
 
-        public void AddData(string key, object val)
+        public void SetData(string key, object val)
         {
             if (!_data.ContainsKey(key))
                 _data.Add(key, val);
@@ -18,11 +18,11 @@ namespace Goap
                 _data[key] = val;
         }
 
-        public object GetData(string key)
+        public T GetData<T>(string key)
         {
             if (_data.ContainsKey(key))
-                return _data[key];
-            return null;
+                return (T)_data[key];
+            return default(T);
         }
         public void AddDatas(string key, object[] val)
         {

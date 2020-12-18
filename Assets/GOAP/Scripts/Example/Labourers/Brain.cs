@@ -13,7 +13,10 @@ public class Goals
     public static string FillOther = "FillOther";
 }
 
-public class Brain : MonoBehaviour,IBrain
+/// <summary>
+/// 根据当前状态来计算goal的类
+/// </summary>
+public class Brain :IBrain
 {
     public int Hunger = 100;
     public int Mind = 100;

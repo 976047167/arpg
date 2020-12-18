@@ -6,22 +6,21 @@ namespace Goap.Action
 {
     public abstract  class GoapAction 
     {
+        public Dictionary<string, bool> Preconditions
+        { get;private set; }
 
+        public Dictionary<string, bool> Effects
+        { get;private set; }
 
-        private Dictionary<string, bool> preconditions;
-        private Dictionary<string, bool> effects;
-
-        private bool inRange = false;
-
-        /* The Cost of performing the action. 
-         * Figure out a weight that suits the action. 
-         * Changing it will affect what actions are chosen during planning.*/
-        public float Cost = 1f;
         public ACTION_TYPE type { get; internal set;}
-        public virtual float GetCost()
+		/// <summary>
+		/// 行为的消耗,用于与权重进行计算
+		/// </summary>
+		/// <value></value>
+        public virtual float Cost
         {
-            return Cost;
-        }
+			get; protected set;
+		}
 
 		/// <summary>
 		/// 风险
@@ -39,34 +38,17 @@ namespace Goap.Action
         {
             return (1 - Risk) * Return;
         }
-
-        /**
-         * An action often has to perform on an object. This is that object. Can be null. */
-        public GameObject target;
-
         public GoapAction()
         {
-            preconditions = new Dictionary<string, bool>();
-            effects = new Dictionary<string, bool>();
+            Preconditions = new Dictionary<string, bool>();
+            Effects = new Dictionary<string, bool>();
         }
 
-        public void doReset(GoapAgent agent)
-        {
-            inRange = false;
-            target = null;
-            reset();
-        }
-
-
-        /**
-         * Reset any variables that need to be reset before planning happens again.
-         */
-        public abstract void reset();
-
-        /**
-         * Is the action done?
-         */
-        public abstract bool isDone();
+		/// <summary>
+		/// 重置agent所需变量
+		/// </summary>
+		/// <param name="agent"></param>
+        public abstract void Reset(GoapAgent agent);
 
 		/// <summary>
 		/// 检测当前agent是否符合动作条件
@@ -90,7 +72,7 @@ namespace Goap.Action
 		/// <param name="value">值</param>
         public void addPrecondition(string key, bool value)
         {
-            preconditions.Add(key, value);
+            Preconditions.Add(key, value);
         }
 
 		/// <summary>
@@ -99,8 +81,8 @@ namespace Goap.Action
 		/// <param name="key">键</param>
         public void removePrecondition(string key)
         {
-            if (preconditions.ContainsKey(key))
-                preconditions.Remove(key);
+            if (Preconditions.ContainsKey(key))
+                Preconditions.Remove(key);
         }
 
 
@@ -112,7 +94,7 @@ namespace Goap.Action
 		/// <param name="value">值</param>
         public void addEffect(string key, bool value)
         {
-            effects.Add(key, value);
+            Effects.Add(key, value);
         }
 
 
@@ -122,25 +104,8 @@ namespace Goap.Action
 		/// <param name="key">键</param>
         public void removeEffect(string key)
         {
-            if (effects.ContainsKey(key))
-                effects.Remove(key);
-        }
-
-
-        public Dictionary<string, bool> Preconditions
-        {
-            get
-            {
-                return preconditions;
-            }
-        }
-
-        public Dictionary<string, bool> Effects
-        {
-            get
-            {
-                return effects;
-            }
+            if (Effects.ContainsKey(key))
+                Effects.Remove(key);
         }
     }
 }

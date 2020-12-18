@@ -33,15 +33,12 @@ namespace Goap.Action
             return chopped;
         }
 
-        public override bool requiresInRange()
-        {
-            return true; // yes we need to be near a chopping block
-        }
 
-        public override bool checkProceduralPrecondition(GameObject agent, DataBag bb)
+        public override bool checkProceduralPrecondition(GoapAgent agent)
         {
-            // find the nearest chopping block that we can chop our wood at
-            ChoppingBlockComponent[] blocks = (ChoppingBlockComponent[])bb.GetData("choppingBlock");
+			// find the nearest chopping block that we can chop our wood at
+			DataBag bb = agent.dataProvider;
+			ChoppingBlockComponent[] blocks = (ChoppingBlockComponent[])bb.GetData("choppingBlock");
             ChoppingBlockComponent closest = null;
             float closestDist = 0;
 

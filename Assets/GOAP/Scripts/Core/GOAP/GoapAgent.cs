@@ -23,7 +23,6 @@ namespace Goap
 
 		private IEnumerator<bool> actionPerformance;
 		private FSM.FSMState idleState; // finds something to do
-										// private FSM.FSMState moveToState; // moves to a target
 		private FSM.FSMState performActionState; // performs an action
 		private FSM stateMachine;
 
@@ -34,7 +33,6 @@ namespace Goap
 			workingActions = new Queue<GoapAction>();
 			this.dataProvider = dataProvider;
 			createIdleState();
-			createMoveToState();
 			createPerformActionState();
 			stateMachine.pushState(idleState);
 		}
@@ -59,12 +57,6 @@ namespace Goap
 			GoapAction action = GoapActionPool.getInstance().getAction(type);
 			availableActions.Remove(action);
 		}
-
-
-		// private void Update()
-		// {
-		//     stateMachine.Update(gameObject);
-		// }
 
 		private bool hasActionPlan()
 		{
@@ -104,37 +96,17 @@ namespace Goap
 			};
 		}
 
-		private void createMoveToState()
-		{
-			// moveToState = (fsm, gameObj) =>
-			// {
-			//     GoapAction action = workingActions.Peek();
-			//     if (dataProvider.moveAgent(action))
-			//     {
-			//         fsm.popState();
-			//     }
-
-			// };
-		}
 
 		private void createPerformActionState()
 		{
 			performActionState = (fsm, gameObj) =>
 			{
-				// perform the action
 				var action = this.actionPerformance;
-				if (!action.MoveNext())
+				var working = action.MoveNext();//进行一步动作
+				var success = action.Current;//现在的状态
+				if (!working)
 				{
-					var success = action.Current;
-					if (!success)
-					{
-						// action failed, we need to plan again
-						fsm.popState();
-						fsm.pushState(idleState);
-						// dataProvider.planAborted(action);
-						return;
-					}
-					// the action is done. Remove it so we can perform the next one
+					//不能进行下一步，说明动作成功做完
 					workingActions.Dequeue();
 					if (!hasActionPlan())
 					{
@@ -145,12 +117,20 @@ namespace Goap
 						dataProvider.actionsFinished();
 						return;
 					}
+					else
+					{
+						// perform the next action
+						this.actionPerformance = workingActions.Peek().createPerformance(this);
+						this.actionPerformance.Reset();
+						return;
+					}
 				}
-				else
+				if (!success)//进行失败,重新计算
 				{
-					// perform the next action
-					this.actionPerformance = workingActions.Peek().createPerformance(this);
-					this.actionPerformance.Reset();
+					fsm.popState();
+					fsm.pushState(idleState);
+					// dataProvider.planAborted(action);
+					return;
 				}
 			};
 		}

@@ -26,7 +26,7 @@ namespace Goap
             // 重置所有action状态
             foreach (var action in agent.GetActions())
             {
-                action.doReset(agent);
+                action.Reset(agent);
                 availableActions.Add(action);
             }
 
@@ -112,7 +112,7 @@ namespace Goap
                     // apply the action's effects to the parent state
                     var currentState = populateState(parent.state, action.Effects);
                     //Debug.Log(GoapAgent.prettyPrint(currentState));
-                    var node = NodeManager.GetFreeNode(parent, parent.runningCost + action.GetCost(), parent.weight + action.GetWeight(),
+                    var node = NodeManager.GetFreeNode(parent, parent.runningCost + action.Cost, parent.weight + action.GetWeight(),
                         currentState, action);
 
                     //force child.precondition in parent.effects or child.precondition is empty.

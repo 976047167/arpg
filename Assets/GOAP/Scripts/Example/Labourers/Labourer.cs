@@ -44,7 +44,7 @@ public abstract class Labourer : MonoBehaviour, IGoap
 	}
 
 
-    public DataBag GetBlackBoard()
+    public DataBag GetDataBag()
     {
         return bb;
     }
@@ -87,15 +87,7 @@ public abstract class Labourer : MonoBehaviour, IGoap
 
 	public bool moveAgent(GoapAction nextAction) {
 		// move towards the NextAction's target
-		float step = moveSpeed * Time.deltaTime;
-		gameObject.transform.position = Vector3.MoveTowards(gameObject.transform.position, nextAction.target.transform.position, step);
-		
-		if (gameObject.transform.position.Equals(nextAction.target.transform.position) ) {
-			// we are at the target location, we are done
-			nextAction.setInRange(true);
-			return true;
-		} else
-			return false;
+
 	}
 
     public virtual void Init()
@@ -111,7 +103,7 @@ public abstract class Labourer : MonoBehaviour, IGoap
         }
 
         if (Brain == null)
-            Brain = gameObject.GetComponent<Brain>();
+            Brain = new Brain();
         Brain.Init();
 
         //init world data
@@ -122,16 +114,16 @@ public abstract class Labourer : MonoBehaviour, IGoap
         worldData.Add("hasMeat", (backpack.numMeat > 0));
 
         //init blackboard
-        bb.AddData("backpack", backpack);
-        bb.AddData("brain", Brain);
-        bb.AddData("ironRock", FindObjectsOfType(typeof(IronRockComponent)));
-        bb.AddData("appleTree", FindObjectsOfType(typeof(AppleTreeComponet)));
-        bb.AddData("forge", FindObjectsOfType(typeof(ForgeComponent)));
-        bb.AddData("tree", FindObjectsOfType(typeof(TreeComponent)));
-        bb.AddData("wolfDen", FindObjectsOfType(typeof(WolfDen)));
-        bb.AddData("choppingBlock", FindObjectsOfType(typeof(ChoppingBlockComponent)));
-        bb.AddData("supplyPiles", FindObjectsOfType(typeof(SupplyPileComponent)));
-        bb.AddData("camp", FindObjectsOfType(typeof(CampComponent)));
+        bb.SetData("backpack", backpack);
+        bb.SetData("brain", Brain);
+        bb.SetData("ironRock", FindObjectsOfType(typeof(IronRockComponent)));
+        bb.SetData("appleTree", FindObjectsOfType(typeof(AppleTreeComponet)));
+        bb.SetData("forge", FindObjectsOfType(typeof(ForgeComponent)));
+        bb.SetData("tree", FindObjectsOfType(typeof(TreeComponent)));
+        bb.SetData("wolfDen", FindObjectsOfType(typeof(WolfDen)));
+        bb.SetData("choppingBlock", FindObjectsOfType(typeof(ChoppingBlockComponent)));
+        bb.SetData("supplyPiles", FindObjectsOfType(typeof(SupplyPileComponent)));
+        bb.SetData("camp", FindObjectsOfType(typeof(CampComponent)));
     }
 
     public virtual void Tick()
