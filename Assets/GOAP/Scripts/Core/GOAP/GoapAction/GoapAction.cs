@@ -6,9 +6,17 @@ namespace Goap.Action
 {
     public abstract  class GoapAction 
     {
+		/// <summary>
+		/// 先决条件
+		/// </summary>
+		/// <value></value>
         public Dictionary<string, bool> Preconditions
         { get;private set; }
 
+		/// <summary>
+		/// 造成后果
+		/// </summary>
+		/// <value></value>
         public Dictionary<string, bool> Effects
         { get;private set; }
 

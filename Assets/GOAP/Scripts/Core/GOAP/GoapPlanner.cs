@@ -174,13 +174,13 @@ namespace Goap
                     subset.Add(a);
             }
             return subset;
-        }
-
-        /**
-         * Check that all items in 'test' are in 'state'. If just one does not match or is not there
-         * then this returns false.
-         */
-
+		}
+		/// <summary>
+		/// 检测test是不是state的子集
+		/// </summary>
+		/// <param name="test"></param>
+		/// <param name="state"></param>
+		/// <returns></returns>
         private static bool inState(Dictionary<string, bool> test, Dictionary<string, bool> state)
         {
             var allMatch = true;
@@ -194,17 +194,26 @@ namespace Goap
                 }
             }
             return allMatch;
-        }
+		}
+		/// <summary>
+		/// state 是否已经满足gaol
+		/// </summary>
+		/// <param name="goal"></param>
+		/// <param name="state"></param>
+		/// <returns></returns>
         private static bool FillGoal(KeyValuePair<string, bool> goal, Dictionary<string, bool> state)
         {
             var match = state.ContainsKey(goal.Key) && state[goal.Key] == goal.Value;
             return match;
         }
 
-        /**
-         * Apply the stateChange to the currentState
-         */
-
+  
+		/// <summary>
+		/// 将改变的state完全应用到current中
+		/// </summary>
+		/// <param name="currentState"></param>
+		/// <param name="stateChange"></param>
+		/// <returns></returns>
         private static Dictionary<string, bool> populateState(Dictionary<string, bool> currentState,
             Dictionary<string, bool> stateChange)
         {
