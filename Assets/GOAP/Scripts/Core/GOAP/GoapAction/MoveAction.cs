@@ -10,7 +10,11 @@ namespace Goap.Action
 		{
 
 			DataBag bb = agent.dataProvider.GetDataBag();
-			bb.SetData("MoveTarget",new Queue<GameObject>());
+			Queue<GameObject> q = bb.GetData<Queue<GameObject>>("MoveTarget");
+			if(q == null)
+				bb.SetData("MoveTarget",new Queue<GameObject>());
+			else
+				q.Clear();
 		}
 
 		public override bool checkProceduralPrecondition(GoapAgent agent)
@@ -22,8 +26,8 @@ namespace Goap.Action
 		{
 			// throw new NotImplementedException();
 			DataBag bb = agent.dataProvider.GetDataBag();
-			bool ret = false;
-			GameObject gameObject = bb.GetData<GameObject>("GameObject");
+			GameObject gameObject = agent.dataProvider.gameObject;
+			bool ret = true;
 			GameObject target =  bb.GetData<Queue<GameObject>>("MoveTarget").Peek();
 			if (target == null)
 			{

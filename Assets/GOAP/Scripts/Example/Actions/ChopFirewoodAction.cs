@@ -37,8 +37,8 @@ namespace Goap.Action
         public override bool checkProceduralPrecondition(GoapAgent agent)
         {
 			// find the nearest chopping block that we can chop our wood at
-			DataBag bb = agent.dataProvider;
-			ChoppingBlockComponent[] blocks = (ChoppingBlockComponent[])bb.GetData("choppingBlock");
+			DataBag bb = agent.dataProvider.GetDataBag();
+			ChoppingBlockComponent[] blocks = bb.GetData<ChoppingBlockComponent[]>("choppingBlock");
             ChoppingBlockComponent closest = null;
             float closestDist = 0;
 

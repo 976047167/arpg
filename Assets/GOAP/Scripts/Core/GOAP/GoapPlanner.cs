@@ -140,7 +140,13 @@ namespace Goap
             return foundOne;
         }
 
-        //if there is one true relationship
+
+		/// <summary>
+		/// 是否有至少一项条件关联
+		/// </summary>
+		/// <param name="preconditions"></param>
+		/// <param name="effects"></param>
+		/// <returns></returns>
         private static bool CondRelation(Dictionary<string, bool> preconditions
                                 , Dictionary<string, bool> effects)
         {
@@ -153,10 +159,12 @@ namespace Goap
             return false;
         }
 
-        /**
-         * Create a subset of the actions excluding the removeMe one. Creates a new set.
-         */
-
+		/// <summary>
+		/// 创建一个新的子SET，内容为父SET减去第二个参数
+		/// </summary>
+		/// <param name="actions">父SET</param>
+		/// <param name="removeMe">减除的value</param>
+		/// <returns></returns>
         private static HashSet<GoapAction> actionSubset(HashSet<GoapAction> actions, GoapAction removeMe)
         {
             var subset = NodeManager.GetFreeActionSet();

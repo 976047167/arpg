@@ -68,5 +68,6 @@ using Action;
         /// save agent instance
         /// </summary>
         IAgent Agent { get; set; }
-    }
+		GameObject gameObject{ get; set; }
+	}
 }
