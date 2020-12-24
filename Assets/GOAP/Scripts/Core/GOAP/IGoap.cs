@@ -63,11 +63,12 @@ using Action;
         void Init();
         void Tick();
         void Release();
+		IEnumerator<bool> MoveMent(GoapAction action);
 
-        /// <summary>
-        /// save agent instance
-        /// </summary>
-        IAgent Agent { get; set; }
 		GameObject gameObject{ get; set; }
+		/// <summary>
+		/// save agent instance
+		/// </summary>
+		IAgent Agent { get; set; }
 	}
 }

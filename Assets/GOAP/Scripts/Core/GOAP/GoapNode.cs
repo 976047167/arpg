@@ -49,7 +49,7 @@ namespace Goap
         }
 
         /// <summary>
-        ///     compare node
+        /// 比较节点的权重和消耗
         /// </summary>
         /// <param name="cheapest"></param>
         /// <returns></returns>

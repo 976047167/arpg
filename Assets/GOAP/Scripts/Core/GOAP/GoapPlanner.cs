@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 
 namespace Goap
@@ -9,7 +8,6 @@ namespace Goap
     /**
      * Plans what actions can be completed in order to fulfill a goal state.
      */
-
     internal class GoapPlanner
     {
         /// <summary>
@@ -40,12 +38,12 @@ namespace Goap
 
             // we now have all actions that can run, stored in usableActions
 
-            // build up the tree and record the leaf nodes that provide a solution to the goal.
+            // 记录递归结果的集合.
             var leaves = new List<GoapNode>();
 
-            // build graph
-            var start = NodeManager.GetFreeNode(null, 0, 0, worldState, null);
-            var success = buildGraph(start, leaves, usableActions, goal);
+            // 创建根节点
+            var root = NodeManager.GetFreeNode(null, 0, 0, worldState, null);
+            var success = buildGraph(root,ref leaves, usableActions, goal);
 
             if (!success)
             {
@@ -54,7 +52,7 @@ namespace Goap
                 return null;
             }
 
-            // get the cheapest leaf
+            //找出几个叶子节点中权重消耗比最大的那个。
             GoapNode cheapest = null;
             foreach (var leaf in leaves)
             {
@@ -67,28 +65,24 @@ namespace Goap
                 }
             }
 
-            // get its node and work back through the parents
-            var result = new List<GoapAction>();
+            //输出结果队列
+            var result = new Stack<GoapAction>();
             var n = cheapest;
             while (n != null)
             {
                 if (n.action != null)
                 {
-                    result.Insert(0, n.action); // insert the action in the front
+                    result.Push(n.action); 
                 }
                 n = n.parent;
             }
-
             NodeManager.Release();
-            // we now have this action list in correct order
-
             var queue = new Queue<GoapAction>();
-            foreach (var a in result)
-            {
-                queue.Enqueue(a);
-            }
-            // hooray we have a plan!
-            return queue;
+			while (result.Count>0)
+			{
+				queue.Enqueue(result.Pop());
+			}
+			return queue;
         }
 
         /**
@@ -98,7 +92,7 @@ namespace Goap
          * sequence.
          */
 
-        private static bool buildGraph(GoapNode parent, List<GoapNode> leaves
+        private static bool buildGraph(GoapNode parent,ref List<GoapNode> leaves
             , HashSet<GoapAction> usableActions, KeyValuePair<string, bool> goal)
         {
             var foundOne = false;
@@ -106,20 +100,21 @@ namespace Goap
             // go through each action available at this node and see if we can use it here
             foreach (var action in usableActions)
             {
-                // if the parent state has the conditions for this action's preconditions, we can use it here
+                //检测当前动作前提是否符合状态
                 if (inState(action.Preconditions, parent.state))
                 {
-                    // apply the action's effects to the parent state
+					//剪枝，如果动作没有先决条件，那么他的父节点必然为根节点，否则直接跳过
+                    if (action.Preconditions.Count == 0 && parent.action != null)continue;
+					//如果父节点不是根节点（即父节点有动作），那么动作的先决条件至少要和父节动作点造成的影响有关
+					if( parent.action != null && !CondRelation(action.Preconditions, parent.action.Effects)) continue;
+
+					
+                    //应用行动后的状态为当前状态
                     var currentState = populateState(parent.state, action.Effects);
                     //Debug.Log(GoapAgent.prettyPrint(currentState));
+					//生成新的节点，累积父节点的权重和消耗
                     var node = NodeManager.GetFreeNode(parent, parent.runningCost + action.Cost, parent.weight + action.GetWeight(),
                         currentState, action);
-
-                    //force child.precondition in parent.effects or child.precondition is empty.
-                    if (action.Preconditions.Count == 0 && parent.action != null ||
-                        parent.action != null && !CondRelation(action.Preconditions, parent.action.Effects))
-                        continue;
-
                     if (FillGoal(goal, currentState))
                     {
                         // we found a solution!
@@ -128,9 +123,9 @@ namespace Goap
                     }
                     else
                     {
-                        // not at a solution yet, so test all the remaining actions and branch out the tree
+						//如果没找到，那么以这个动作为父节点，继续遍历
                         var subset = actionSubset(usableActions, action);
-                        var found = buildGraph(node, leaves, subset, goal);
+                        var found = buildGraph(node,ref leaves, subset, goal);
                         if (found)
                             foundOne = true;
                     }
@@ -176,7 +171,7 @@ namespace Goap
             return subset;
 		}
 		/// <summary>
-		/// 检测test是不是state的子集
+		/// 目标状态集合是否全在该目标集合内  
 		/// </summary>
 		/// <param name="test"></param>
 		/// <param name="state"></param>

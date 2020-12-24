@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Goap.Action;
 namespace Goap
 {
@@ -22,8 +21,11 @@ namespace Goap
 		// this is the implementing class that provides our world data and listens to feedback on planning
 
 		private IEnumerator<bool> actionPerformance;
+		private IEnumerator<bool> movePerformance;
 		private FSM.FSMState idleState; // finds something to do
+		private FSM.FSMState moveToState; // finds something to do
 		private FSM.FSMState performActionState; // performs an action
+		private FSM.FSMState performte; // performs an action
 		private FSM stateMachine;
 
 		public GoapAgent(IGoap dataProvider)
@@ -33,6 +35,7 @@ namespace Goap
 			workingActions = new Queue<GoapAction>();
 			this.dataProvider = dataProvider;
 			createIdleState();
+			createMoveToState();
 			createPerformActionState();
 			stateMachine.pushState(idleState);
 		}
@@ -69,7 +72,7 @@ namespace Goap
 		/// </summary>
 		private void createIdleState()
 		{
-			this.idleState = (fsm, gameObj) =>
+			this.idleState = (fsm) =>
 			{
 				//获得一个根据优先级排序的目标队列
 				var goals = dataProvider.createGoalState();
@@ -88,7 +91,6 @@ namespace Goap
 					//更新当前agent的状态
 					workingActions = plan;
 					dataProvider.planFound(lastGoal, plan);
-
 					fsm.popState(); // move to PerformAction state
 					fsm.pushState(performActionState);
 				}
@@ -99,19 +101,31 @@ namespace Goap
 
 		private void createPerformActionState()
 		{
-			performActionState = (fsm, gameObj) =>
+			performActionState = (fsm) =>
 			{
-				var action = this.actionPerformance;
-				var working = action.MoveNext();//进行一步动作
-				var success = action.Current;//现在的状态
+				var performance = this.actionPerformance;
+				var action = this.workingActions.Peek();
+				if (performance == null)
+				{
+					this.actionPerformance = action.createPerformance(this);
+					this.actionPerformance.Reset();
+				}
+				if (!action.CheckInRange(this))
+				{
+					fsm.pushState(idleState);
+					return;
+				}
+				var working = performance.MoveNext();//进行一步动作
+				var success = performance.Current;//现在的状态
 				if (!working)
 				{
 					//不能进行下一步，说明动作成功做完
-					workingActions.Dequeue();
+					this.workingActions.Dequeue();
 					if (!hasActionPlan())
 					{
 						// no actions to perform
-						Debug.Log("<color=red>Done actions</color>");
+						System.Console.WriteLine("<color=red>Done actions</color>");
+						this.actionPerformance = null;
 						fsm.popState();
 						fsm.pushState(idleState);
 						dataProvider.actionsFinished();
@@ -120,7 +134,7 @@ namespace Goap
 					else
 					{
 						// perform the next action
-						this.actionPerformance = workingActions.Peek().createPerformance(this);
+						this.actionPerformance = this.workingActions.Peek().createPerformance(this);
 						this.actionPerformance.Reset();
 						return;
 					}
@@ -129,12 +143,30 @@ namespace Goap
 				{
 					fsm.popState();
 					fsm.pushState(idleState);
-					// dataProvider.planAborted(action);
+					dataProvider.planAborted(action);
 					return;
 				}
 			};
 		}
 
+    private void createMoveToState()
+    {
+        moveToState = (fsm) =>
+        {
+
+			var action = workingActions.Peek();
+			if (this.movePerformance == null)
+			{
+				this.movePerformance =dataProvider.MoveMent(action);
+			}
+			this.movePerformance.MoveNext();
+			if (action.CheckInRange(this))
+			{
+				this.movePerformance = null;
+				fsm.popState();
+			}
+        };
+    }
 		public static string prettyPrint(HashSet<KeyValuePair<string, object>> state)
 		{
 			var s = "";

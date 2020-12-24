@@ -1,11 +1,11 @@
 
-using UnityEngine;
 using System.Collections.Generic;
 
 namespace Goap.Action
 {
     public abstract  class GoapAction 
     {
+		protected bool requireInrange = false;
 		/// <summary>
 		/// 先决条件
 		/// </summary>
@@ -115,5 +115,11 @@ namespace Goap.Action
             if (Effects.ContainsKey(key))
                 Effects.Remove(key);
         }
+
+		public virtual bool CheckInRange(GoapAgent agent )
+		{
+			if(!requireInrange)return true;
+			return false;
+		}
     }
 }
