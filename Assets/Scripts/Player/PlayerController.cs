@@ -21,6 +21,6 @@ public class PlayerController : MonoBehaviour
         
     }
     private void Update() {
-        this.movement.SetMove(this.input.movement);
+        this.movement.SetMove(this.input.direction);
     }
 }
