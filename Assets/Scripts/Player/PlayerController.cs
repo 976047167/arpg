@@ -21,6 +21,10 @@ public class PlayerController : MonoBehaviour
         
     }
     private void Update() {
-        this.movement.SetMove(this.input.direction);
+        this.movement.SetMoveCommand(this.input.direction);
+    }
+    private void FixedUpdate() {
+        this.animator.setSpeed(this.movement.speed);
+        
     }
 }

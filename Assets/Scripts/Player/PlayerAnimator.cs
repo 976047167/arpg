@@ -1,14 +1,10 @@
-using System.Collections.Generic;
 using UnityEngine;
-[RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerAnimator : MonoBehaviour
 {
-    public bool canMove = true;
-    public bool canSkill = false;
 
     private Rigidbody mRigid;
-    private Animator _animator;
+    public Animator _animator;
     private PlayerController controller;
 
     private void Awake()
@@ -23,6 +19,10 @@ public class PlayerAnimator : MonoBehaviour
 
     private void Update()
     {
+
+    }
+    public void setSpeed(float speed){
+        this._animator.SetFloat("speed",speed);
 
     }
 

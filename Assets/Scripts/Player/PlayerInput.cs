@@ -8,8 +8,8 @@ public class PlayerInput : MonoBehaviour
     public Vector3 direction;
         
 
-    private void Update()
-    {
+     private void Update() 
+     {
         direction.x = Input.GetAxisRaw("Horizontal");
         direction.z = Input.GetAxisRaw("Vertical");
     }

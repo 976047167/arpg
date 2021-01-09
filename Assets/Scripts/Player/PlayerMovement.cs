@@ -1,3 +1,5 @@
+using System;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,8 +7,9 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerMovement : MonoBehaviour
 {
- 
+    public float speed;
     private PlayerController controller;
+    private Vector3 moveCommand = Vector3.zero;
     private Vector3 movement = Vector3.zero;
     private Rigidbody rigidbody;
 	private Transform cameraTrans;
@@ -18,19 +21,26 @@ public class PlayerMovement : MonoBehaviour
 	}
     private void Start() {
     }
-    public void SetMove(Vector3 direction){
-        this.movement = direction;
-		
+    public void SetMoveCommand(Vector3 direction){
+        this.moveCommand = direction;
     }
     private void FixedUpdate() {
 		this.Move();
 	}
 	private void Move()
 	{
-        Vector3 target = this.cameraTrans.forward * movement.z + this.cameraTrans.right * movement.x;
-        target.y = 0;
-        RoundView(target);
-		rigidbody.velocity = target * Constants.MaxSpeed;
+        if(this.moveCommand.Equals(Vector3.zero)){
+            this.movement = Vector3.zero;
+            this.speed =0;
+            return;
+        }
+        
+        this.movement =this.cameraTrans.forward * moveCommand.z + this.cameraTrans.right * moveCommand.x;
+        this.movement.y = 0;
+        this.movement = this.movement.normalized;
+        this.speed =Mathf.Lerp(this.speed,0.5f,0.3f);
+        RoundView(this.movement);
+		rigidbody.velocity = this.movement *this.speed* Constants.MaxWalkSpeed;
 	}
 
 	/// <summary>
@@ -40,6 +50,6 @@ public class PlayerMovement : MonoBehaviour
     {
         if (target == Vector3.zero) return;
         Quaternion direction = Quaternion.LookRotation(target);
-        transform.rotation = Quaternion.Slerp(transform.rotation, direction, 0.2f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, direction, Constants.RoundSpeed);
     }
 }
