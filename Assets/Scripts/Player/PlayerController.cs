@@ -5,16 +5,16 @@ using UnityEngine;
 
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(PlayerAnimator))]
-[RequireComponent(typeof(PlayerMovement))]
+[RequireComponent(typeof(PlayerLocomotion))]
 public class PlayerController : MonoBehaviour
 {
     private PlayerInput input;
-    private PlayerMovement movement;
+    private PlayerLocomotion movement;
     private PlayerAnimator animator;
     private void Awake()
     {
         this.input = this.GetComponent<PlayerInput>();
-        this.movement = this.GetComponent<PlayerMovement>();
+        this.movement = this.GetComponent<PlayerLocomotion>();
         this.animator = this.GetComponent<PlayerAnimator>();
     }
     private void Start() {

@@ -5,19 +5,25 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerMovement : MonoBehaviour
+public class PlayerLocomotion : MonoBehaviour
 {
     public float speed;
     private PlayerController controller;
     private Vector3 moveCommand = Vector3.zero;
     private Vector3 movement = Vector3.zero;
-    private Rigidbody rigidbody;
 	private Transform cameraTrans;
 	private void Awake()
     {
-        this.rigidbody = this.GetComponent<Rigidbody>();
         this.controller = this.GetComponent<PlayerController>();
 		this.cameraTrans = Camera.main.transform;
+
+		//刚体组件不参与任何移动的判定，它唯一的用途是告诉unity这不是一个静态的物体
+        var rigidbody = this.GetComponent<Rigidbody>();
+		rigidbody.mass = 100;
+		rigidbody.isKinematic = true;
+		rigidbody.constraints = RigidbodyConstraints.FreezeAll;	
+	
+
 	}
     private void Start() {
     }
@@ -40,7 +46,7 @@ public class PlayerMovement : MonoBehaviour
         this.movement = this.movement.normalized;
         this.speed =Mathf.Lerp(this.speed,0.5f,0.3f);
         RoundView(this.movement);
-		rigidbody.velocity = this.movement *this.speed* Constants.MaxWalkSpeed;
+		GetComponent<Rigidbody>().velocity = this.movement *this.speed* Constants.MaxWalkSpeed;
 	}
 
 	/// <summary>
@@ -52,4 +58,7 @@ public class PlayerMovement : MonoBehaviour
         Quaternion direction = Quaternion.LookRotation(target);
         transform.rotation = Quaternion.Slerp(transform.rotation, direction, Constants.RoundSpeed);
     }
+	private void OnAnimatorMove() {
+		
+	}
 }
