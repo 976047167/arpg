@@ -27,7 +27,7 @@ public class GameActionBase
 	/// <summary>
 	/// 动作正在执行中
 	/// </summary>
-	public bool Actived;
+	public bool Active;
 	public StartType StartType;
 	public StopType StopType;
 	protected PlayerLocomotion playerLocomotion;
@@ -43,7 +43,7 @@ public class GameActionBase
 		this.playerAnimator = gameObject.GetComponent<PlayerAnimator>();
 		this.index = index;
 	}
-	public virtual bool canStartAction()
+	public virtual bool canActivate()
 	{
 		return true;
 	}
@@ -55,7 +55,7 @@ public class GameActionBase
 	{
 		return true;
 	}
-	public virtual bool canStopAction(PlayerInput input)
+	public virtual bool canDeactivate(PlayerInput input)
 	{
 		return true;
 	}

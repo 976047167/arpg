@@ -26,36 +26,26 @@ public class PlayerLocomotion : MonoBehaviour
 		rigidbody.isKinematic = true;
 		rigidbody.constraints = RigidbodyConstraints.FreezeAll;
 		this.actions = new GameActionBase[0];
-
-
 	}
 	private void Start()
 	{
 	}
 	public void Tick(PlayerInput input)
 	{
-		// this.Move();
 		this.UpdateInputActions(input);
-	}
-
-	/// <summary>
-	/// 旋转视角
-	/// </summary>
-	private void RoundView(Vector3 target)
-	{
-		if (target == Vector3.zero) return;
-		Quaternion direction = Quaternion.LookRotation(target);
-		transform.rotation = Quaternion.Slerp(transform.rotation, direction, Constants.RoundSpeed);
 	}
 	private void OnAnimatorMove()
 	{
 
 	}
-	public bool tryStartAction(GameActionBase action)
+	public bool tryActiveAction(GameActionBase action)
 	{
+		if(!action.Enabled)return false;
+		if(!action.canActivate())return false;
+		if(action.Active)return false;
 		return true;
 	}
-	public bool tryStopAction(GameActionBase action)
+	public bool tryDeactivateAction(GameActionBase action)
 	{
 		return true;
 	}
@@ -70,15 +60,15 @@ public class PlayerLocomotion : MonoBehaviour
 			if (!action.Enabled) {
 				continue;
 			}
-			if (action.Actived) {
-				if (action.canStopAction(input)) {
-					this.tryStopAction(action);
+			if (action.Active) {
+				if (action.canDeactivate(input)) {
+					this.tryDeactivateAction(action);
 				}
 			}
 			else
 			{
 				if (action.canStartAction(input)) {
-					this.tryStartAction(action);
+					this.tryActiveAction(action);
 				}
 			}
 		}
