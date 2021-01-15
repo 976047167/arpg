@@ -8,23 +8,22 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerLocomotion))]
 public class PlayerController : MonoBehaviour
 {
-    private PlayerInput input;
-    private PlayerLocomotion movement;
+    private PlayerInput Input;
+    private PlayerLocomotion locomotion;
     private PlayerAnimator animator;
-    private void Awake()
+	private Vector3 moveInput = Vector3.zero;
+	private void Awake()
     {
-        this.input = this.GetComponent<PlayerInput>();
-        this.movement = this.GetComponent<PlayerLocomotion>();
+        this.Input = this.GetComponent<PlayerInput>();
+        this.locomotion = this.GetComponent<PlayerLocomotion>();
         this.animator = this.GetComponent<PlayerAnimator>();
-    }
+	}
     private void Start() {
         
     }
     private void Update() {
-        this.movement.SetMoveCommand(this.input.direction);
-    }
+        this.locomotion.Tick(this.Input);
+	}
     private void FixedUpdate() {
-        this.animator.setSpeed(this.movement.speed);
-        
     }
 }
