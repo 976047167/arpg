@@ -32,34 +32,10 @@ public class PlayerLocomotion : MonoBehaviour
 	private void Start()
 	{
 	}
-	public void SetMoveCommand(Vector3 direction)
-	{
-		this.moveCommand = direction;
-	}
 	public void Tick(PlayerInput input)
 	{
-		this.Move();
+		// this.Move();
 		this.UpdateInputActions(input);
-	}
-	private void Move()
-	{
-		if (Time.deltaTime == 0)
-		{
-			return;
-		}
-		if (this.moveCommand.Equals(Vector3.zero))
-		{
-			this.movement = Vector3.zero;
-			this.speed = 0;
-			return;
-		}
-
-		this.movement = this.cameraTrans.forward * moveCommand.z + this.cameraTrans.right * moveCommand.x;
-		this.movement.y = 0;
-		this.movement = this.movement.normalized;
-		this.speed = Mathf.Lerp(this.speed, 0.5f, 0.3f);
-		RoundView(this.movement);
-		GetComponent<Rigidbody>().velocity = this.movement * this.speed * Constants.MaxWalkSpeed;
 	}
 
 	/// <summary>
