@@ -43,17 +43,20 @@ public class PlayerLocomotion : MonoBehaviour
 		if(!action.Enabled)return false;
 		if(!action.canActivate())return false;
 		if(action.Active)return false;
-		return true;
+		return action.Activavte();
 	}
 	public bool tryDeactivateAction(GameActionBase action)
 	{
-		return true;
+		if(!action.Enabled)return false;
+		if(!action.canDeactivate())return false;
+		if(!action.Active)return false;
+		return action.Deactivate();
 	}
 
 	private void UpdateInputActions(PlayerInput input)
 	{
-		if(actions == null)return;
-		for (int i = 0; i < actions.Length; i++)
+		if(this.actions == null)return;
+		for (int i = 0; i < this.actions.Length; i++)
 		{
 
 			GameActionBase action =actions[i];
@@ -67,9 +70,31 @@ public class PlayerLocomotion : MonoBehaviour
 			}
 			else
 			{
-				if (action.canStartAction(input)) {
+				if (action.canActivate(input)) {
 					this.tryActiveAction(action);
 				}
+			}
+		}
+
+	}
+
+	private void UpdateAutoActions()
+	{
+		if(this.actions == null)return;
+		for (int i = 0; i < this.actions.Length; i++)
+		{
+			GameActionBase action =actions[i];
+			if (!action.Enabled)
+			{
+				continue;
+			}
+			if (action.Active && action.StopType == StopType.Automatic)
+			{
+				this.tryDeactivateAction(action);
+			}
+			else if(!action.Active && action.StartType == StartType.Automatic)
+			{
+				this.tryActiveAction(action);
 			}
 		}
 

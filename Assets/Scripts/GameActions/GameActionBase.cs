@@ -15,6 +15,7 @@ public enum StopType
 	Automatic,
 	// 手动调用
 	Manual,
+
 }
 public class GameActionBase
 {
@@ -27,19 +28,21 @@ public class GameActionBase
 	/// <summary>
 	/// 动作正在执行中
 	/// </summary>
-	public bool Active;
+	public bool Active { get; private set; }
 	public StartType StartType;
 	public StopType StopType;
-	protected PlayerLocomotion playerLocomotion;
+	public float ActiveTime { get; private set; }
+	public float ActiveCount { get; private set; }
+	protected PlayerLocomotion ownerLocomotion;
 	protected PlayerAnimator playerAnimator;
 	protected GameObject gameObject;
 	protected Transform transform;
 	public int index;
-	public virtual void Initialize(PlayerLocomotion playerLocomotion, int index)
+	public virtual void Initialize(PlayerLocomotion owner, int index)
 	{
-		this.playerLocomotion = playerLocomotion;
-		this.gameObject = playerLocomotion.gameObject;
-		this.transform = playerLocomotion.transform;
+		this.ownerLocomotion = owner;
+		this.gameObject = owner.gameObject;
+		this.transform = owner.transform;
 		this.playerAnimator = gameObject.GetComponent<PlayerAnimator>();
 		this.index = index;
 	}
@@ -47,16 +50,26 @@ public class GameActionBase
 	{
 		return true;
 	}
-	public virtual bool canStartAction(PlayerInput input)
+	public virtual bool canActivate(PlayerInput input)
 	{
 		return true;
 	}
-	public virtual bool canStopAction()
+	public virtual bool canDeactivate()
 	{
 		return true;
 	}
 	public virtual bool canDeactivate(PlayerInput input)
 	{
+		return true;
+	}
+	public virtual bool Activavte()
+	{
+		this.Active = true;
+		return true;
+	}
+	public virtual bool Deactivate()
+	{
+		this.Active = false;
 		return true;
 	}
 
