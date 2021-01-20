@@ -62,15 +62,13 @@ public class GameActionBase
 	{
 		return true;
 	}
-	public virtual bool Activavte()
+	public virtual void Activavte()
 	{
 		this.Active = true;
-		return true;
 	}
-	public virtual bool Deactivate()
+	public virtual void Deactivate()
 	{
 		this.Active = false;
-		return true;
 	}
 
 

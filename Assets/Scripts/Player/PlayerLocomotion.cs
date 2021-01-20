@@ -38,19 +38,19 @@ public class PlayerLocomotion : MonoBehaviour
 	{
 
 	}
-	public bool tryActiveAction(GameActionBase action)
+	public void tryActiveAction(GameActionBase action)
 	{
-		if(!action.Enabled)return false;
-		if(!action.canActivate())return false;
-		if(action.Active)return false;
-		return action.Activavte();
+		if(!action.Enabled)return;
+		if(!action.canActivate())return;
+		if(action.Active)return;
+		action.Activavte();
 	}
-	public bool tryDeactivateAction(GameActionBase action)
+	public void tryDeactivateAction(GameActionBase action)
 	{
-		if(!action.Enabled)return false;
-		if(!action.canDeactivate())return false;
-		if(!action.Active)return false;
-		return action.Deactivate();
+		if(!action.Enabled)return;
+		if(!action.canDeactivate())return;
+		if(!action.Active)return;
+		action.Deactivate();
 	}
 
 	private void UpdateInputActions(PlayerInput input)

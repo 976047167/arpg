@@ -5,8 +5,11 @@ using UnityEngine.EventSystems;
 
 public class PlayerInput : MonoBehaviour
 {
-    public Vector3 direction;
-        
+    private Vector3 direction = Vector3.zero;
+	public Vector3 getVector()
+	{
+		return this.direction;
+	}
 
      private void Update() 
      {
