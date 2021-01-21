@@ -33,6 +33,7 @@ public class PlayerLocomotion : MonoBehaviour
 	public void Tick(PlayerInput input)
 	{
 		this.UpdateInputActions(input);
+		this.UpdateAutoActions();
 	}
 	private void OnAnimatorMove()
 	{

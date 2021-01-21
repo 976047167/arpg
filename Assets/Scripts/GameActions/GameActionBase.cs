@@ -35,12 +35,14 @@ public class GameActionBase
 	public float ActiveCount { get; private set; }
 	protected PlayerLocomotion ownerLocomotion;
 	protected PlayerAnimator playerAnimator;
+	public virtual int AnimatorInt { get; protected set; }
 	protected GameObject gameObject;
 	protected Transform transform;
 	public int index;
 	public virtual void Initialize(PlayerLocomotion owner, int index)
 	{
 		this.ownerLocomotion = owner;
+		this.ActiveCount = 0;
 		this.gameObject = owner.gameObject;
 		this.transform = owner.transform;
 		this.playerAnimator = gameObject.GetComponent<PlayerAnimator>();
@@ -64,6 +66,8 @@ public class GameActionBase
 	}
 	public virtual void Activavte()
 	{
+		this.ActiveTime = Time.time;
+		this.ActiveCount++;
 		this.Active = true;
 	}
 	public virtual void Deactivate()
