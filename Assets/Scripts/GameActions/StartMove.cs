@@ -1,3 +1,4 @@
+using UnityEngine;
 /// <summary>
 /// 开始移动的行为，用于启动不同的动画
 /// </summary>
@@ -32,7 +33,7 @@ public class StartMove : GameActionBase
 		}
 
 		// The ability can't start if the character is stopped.
-		if (input.getVector().magnitude == 0)
+		if (input.getDirection().magnitude == 0)
 		{
 			return false;
 		}
@@ -47,7 +48,7 @@ public class StartMove : GameActionBase
 		}
 
 		// The ability can't start if the character is stopped.
-		if (input.getVector().magnitude > 0)
+		if (input.getDirection().magnitude > 0)
 		{
 			return false;
 		}
@@ -57,44 +58,44 @@ public class StartMove : GameActionBase
 	public override void Activavte()
 	{
 		      // The start index is based on the input value.
-            var inputValue = m_CharacterLocomotion.InputVector;
-            AnimationIndex = (int)StartIndex.None;
-            if (inputValue.x > m_SpeedChangeThreshold && inputValue.y > m_SpeedChangeThreshold) {
+            Vector2 inputValue = this.ownerLocomotion.GetInputVector();
+			float speed = Constants.SpeedAcceleration;
+			int AnimationIndex = (int)StartIndex.None;
+            if (inputValue.x > speed && inputValue.y > speed) {
                 AnimationIndex = (int)StartIndex.RunForwardTurnRight;
             } else if (inputValue.x > 0 && inputValue.y > 0) {
                 AnimationIndex = (int)StartIndex.WalkForwardTurnRight;
-            } else if (inputValue.x < -m_SpeedChangeThreshold && inputValue.y > m_SpeedChangeThreshold) {
+            } else if (inputValue.x < -speed && inputValue.y > speed) {
                 AnimationIndex = (int)StartIndex.RunForwardTurnLeft;
             } else if (inputValue.x < 0 && inputValue.y > 0) {
                 AnimationIndex = (int)StartIndex.WalkForwardTurnLeft;
-            } else if (inputValue.x < -m_SpeedChangeThreshold && inputValue.y < -m_SpeedChangeThreshold) {
+            } else if (inputValue.x < -speed && inputValue.y < -speed) {
                 AnimationIndex = (int)StartIndex.RunBackwardTurnLeft;
             } else if (inputValue.x < 0 && inputValue.y < 0) {
                 AnimationIndex = (int)StartIndex.WalkBackwardTurnLeft;
-            } else if (inputValue.x > m_SpeedChangeThreshold && inputValue.y < -m_SpeedChangeThreshold) {
+            } else if (inputValue.x > speed && inputValue.y < -speed) {
                 AnimationIndex = (int)StartIndex.RunBackwardTurnRight;
             } else if (inputValue.x > 0 && inputValue.y < 0) {
                 AnimationIndex = (int)StartIndex.WalkBackwardTurnRight;
-            } else if (inputValue.y > m_SpeedChangeThreshold) {
+            } else if (inputValue.y > speed) {
                 AnimationIndex = (int)StartIndex.RunForward;
             } else if (inputValue.y > 0) {
                 AnimationIndex = (int)StartIndex.WalkForward;
-            } else if (inputValue.y < -m_SpeedChangeThreshold) {
+            } else if (inputValue.y < -speed) {
                 AnimationIndex = (int)StartIndex.RunBackward;
             } else if (inputValue.y < 0) {
                 AnimationIndex = (int)StartIndex.WalkBackward;
-            } else if (inputValue.x > m_SpeedChangeThreshold) {
+            } else if (inputValue.x > speed) {
                 AnimationIndex = (int)StartIndex.RunStrafeRight;
             } else if (inputValue.x > 0) {
                 AnimationIndex = (int)StartIndex.WalkStrafeRight;
-            } else if (inputValue.x < -m_SpeedChangeThreshold) {
+            } else if (inputValue.x < -speed) {
                 AnimationIndex = (int)StartIndex.RunStrafeLeft;
             } else if (inputValue.x < 0) {
                 AnimationIndex = (int)StartIndex.WalkStrafeLeft;
             }
+		this.AnimatorInt = AnimationIndex;
 
-            m_EventStop = false;
-            m_CanStart = false;
 		base.Activavte();
 	}
 

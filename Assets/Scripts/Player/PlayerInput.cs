@@ -5,15 +5,16 @@ using UnityEngine.EventSystems;
 
 public class PlayerInput : MonoBehaviour
 {
-    private Vector3 direction = Vector3.zero;
-	public Vector3 getVector()
+    private Vector2 direction = Vector2.zero;
+	public Vector2 getDirection()
 	{
 		return this.direction;
 	}
 
      private void Update() 
      {
-        direction.x = Input.GetAxisRaw("Horizontal");
-        direction.z = Input.GetAxisRaw("Vertical");
-    }
+        float x = Input.GetAxisRaw("Horizontal");
+        float y = Input.GetAxisRaw("Vertical");
+		this.direction.Set(x, y);
+	}
 }

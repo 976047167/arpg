@@ -33,19 +33,19 @@ public class GameActionBase
 	public StopType StopType;
 	public float ActiveTime { get; private set; }
 	public float ActiveCount { get; private set; }
-	protected PlayerLocomotion ownerLocomotion;
-	protected PlayerAnimator playerAnimator;
+	protected CharacterLocomotion ownerLocomotion;
+	protected CharacterLocomotion playerAnimator;
 	public virtual int AnimatorInt { get; protected set; }
 	protected GameObject gameObject;
 	protected Transform transform;
 	public int index;
-	public virtual void Initialize(PlayerLocomotion owner, int index)
+	public virtual void Initialize(CharacterLocomotion owner, int index)
 	{
 		this.ownerLocomotion = owner;
 		this.ActiveCount = 0;
 		this.gameObject = owner.gameObject;
 		this.transform = owner.transform;
-		this.playerAnimator = gameObject.GetComponent<PlayerAnimator>();
+		this.playerAnimator = gameObject.GetComponent<CharacterLocomotion>();
 		this.index = index;
 	}
 	public virtual bool canActivate()

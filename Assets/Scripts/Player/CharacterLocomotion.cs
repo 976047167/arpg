@@ -4,15 +4,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 /// <summary>
-/// 控制角色移动
+/// 控制角色行动
+/// 可以放在任何角色上
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerLocomotion : MonoBehaviour
+public class CharacterLocomotion : MonoBehaviour
 {
 	public float speed;
 	private PlayerController controller;
-	private Vector3 moveCommand = Vector3.zero;
-	private Vector3 movement = Vector3.zero;
+	private Vector2 InputVector = Vector2.zero;
 	private Transform cameraTrans;
 	public GameActionBase[] actions;
 	private void Awake()
@@ -30,9 +30,40 @@ public class PlayerLocomotion : MonoBehaviour
 	private void Start()
 	{
 	}
-	public void Tick(PlayerInput input)
+
+	/// <summary>
+	/// 更新玩家的输入,
+	/// 只有玩家控制的角色才会被调用这个接口
+	/// </summary>
+	/// <param name="input">输入脚本</param>
+	public void PlayerUpdate(PlayerInput input)
 	{
+		this.SetInputVector(input.getDirection());
 		this.UpdateInputActions(input);
+	}
+
+	/// <summary>
+	/// 由AI或者玩家转传来的角色移动方向的向量；
+	/// </summary>
+	/// <param name="direction">移动的方向</param>
+	public void SetInputVector(Vector2 direction)
+	{
+		this.InputVector.Set(direction.x, direction.y);
+	}
+
+
+	public Vector2 GetInputVector()
+	{
+		return this.InputVector;
+	}
+
+
+
+	/// <summary>
+	/// 更新角色状态
+	/// </summary>
+	private void FixedUpdate() 
+	{
 		this.UpdateAutoActions();
 	}
 	private void OnAnimatorMove()
