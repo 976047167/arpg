@@ -59,10 +59,11 @@ namespace GameAction
 			//缓存中没找到则反射读取attribute
 			if (animatorIdx == -1 )
 			{
-				var arry = classType.GetCustomAttributes(typeof(AnimatorIndex), true);
-				if (arry.Length > 0)
+				var atrArry = classType.GetCustomAttributes(typeof(AnimatorIndex), true);
+				if (atrArry.Length > 0)
 				{
-					animatorIdx = (int)arry[0];
+					var attr = atrArry[0] as AnimatorIndex;
+					animatorIdx = attr.idx; ;
 				}
 			}
 			cacheAnimatorIdx[actionType] = animatorIdx;
