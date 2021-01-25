@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using GameAction;
 /// <summary>
 /// 控制角色行动
 /// 可以放在任何角色上
@@ -12,13 +13,16 @@ public class CharacterLocomotion : MonoBehaviour
 {
 	public float speed;
 	private PlayerController controller;
+	private CharacterAnimator animator;
 	private Vector2 InputVector = Vector2.zero;
 	private Transform cameraTrans;
+	private bool isAnimatorDirty;
 	public GameActionBase[] actions;
 	private void Awake()
 	{
 		this.controller = this.GetComponent<PlayerController>();
 		this.cameraTrans = Camera.main.transform;
+		this.animator = this.GetComponent<CharacterAnimator>();
 
 		//刚体组件不参与任何移动的判定，它唯一的用途是告诉unity这不是一个静态的物体
 		var rigidbody = this.GetComponent<Rigidbody>();
@@ -62,9 +66,10 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <summary>
 	/// 更新角色状态
 	/// </summary>
-	private void FixedUpdate() 
+	private void FixedUpdate()
 	{
 		this.UpdateAutoActions();
+		this.UpdateAnimator();
 	}
 	private void OnAnimatorMove()
 	{
@@ -72,37 +77,41 @@ public class CharacterLocomotion : MonoBehaviour
 	}
 	public void tryActiveAction(GameActionBase action)
 	{
-		if(!action.Enabled)return;
-		if(!action.canActivate())return;
-		if(action.Active)return;
+		if (!action.Enabled) return;
+		if (!action.canActivate()) return;
+		if (action.Active) return;
 		action.Activavte();
 	}
 	public void tryDeactivateAction(GameActionBase action)
 	{
-		if(!action.Enabled)return;
-		if(!action.canDeactivate())return;
-		if(!action.Active)return;
+		if (!action.Enabled) return;
+		if (!action.canDeactivate()) return;
+		if (!action.Active) return;
 		action.Deactivate();
 	}
 
 	private void UpdateInputActions(PlayerInput input)
 	{
-		if(this.actions == null)return;
+		if (this.actions == null) return;
 		for (int i = 0; i < this.actions.Length; i++)
 		{
 
-			GameActionBase action =actions[i];
-			if (!action.Enabled) {
+			GameActionBase action = actions[i];
+			if (!action.Enabled)
+			{
 				continue;
 			}
-			if (action.Active) {
-				if (action.canDeactivate(input)) {
+			if (action.Active)
+			{
+				if (action.canDeactivate(input))
+				{
 					this.tryDeactivateAction(action);
 				}
 			}
 			else
 			{
-				if (action.canActivate(input)) {
+				if (action.canActivate(input))
+				{
 					this.tryActiveAction(action);
 				}
 			}
@@ -112,10 +121,10 @@ public class CharacterLocomotion : MonoBehaviour
 
 	private void UpdateAutoActions()
 	{
-		if(this.actions == null)return;
+		if (this.actions == null) return;
 		for (int i = 0; i < this.actions.Length; i++)
 		{
-			GameActionBase action =actions[i];
+			GameActionBase action = actions[i];
 			if (!action.Enabled)
 			{
 				continue;
@@ -124,10 +133,28 @@ public class CharacterLocomotion : MonoBehaviour
 			{
 				this.tryDeactivateAction(action);
 			}
-			else if(!action.Active && action.StartType == StartType.Automatic)
+			else if (!action.Active && action.StartType == StartType.Automatic)
 			{
 				this.tryActiveAction(action);
 			}
+		}
+
+	}
+	/// <summary>
+	/// 根据行为数据更新动画
+	/// </summary>
+	private void UpdateAnimator()
+	{
+
+		if (this.animator == null) return;
+		//如果没有行为变化，不用更新动画
+		if (!this.isAnimatorDirty) return;
+		this.isAnimatorDirty = false;
+		for (int i = 0; i < this.actions.Length; i++)
+		{
+			var action = this.actions[i];
+			if (!action.Active) continue;
+
 		}
 
 	}
