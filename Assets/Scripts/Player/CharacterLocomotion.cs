@@ -143,10 +143,16 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <summary>
 	/// 根据行为数据更新动画
 	/// </summary>
-	private void UpdateAnimator()
+	/// <param name="immediateUpdate">是否立即更新,否则将在下一次fixupdate更新</param>
+	private void UpdateAnimator(bool immediateUpdate =false)
 	{
-
 		if (this.animator == null) return;
+		//是否立即更新,否则将在下一次fixupdate更新
+		if (!immediateUpdate)
+		{
+			this.isAnimatorDirty = true;
+			return;
+		}
 		//如果没有行为变化，不用更新动画
 		if (!this.isAnimatorDirty) return;
 		this.isAnimatorDirty = false;
