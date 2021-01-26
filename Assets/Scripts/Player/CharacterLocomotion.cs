@@ -69,27 +69,41 @@ public class CharacterLocomotion : MonoBehaviour
 	private void FixedUpdate()
 	{
 		this.UpdateAutoActions();
-		this.UpdateAnimator();
+		this.UpdateAnimator(true);
 	}
 	private void OnAnimatorMove()
 	{
 
 	}
+	/// <summary>
+	/// 角色尝试启动行为
+	/// </summary>
+	/// <param name="action">被启动的行为</param>
 	public void tryActiveAction(GameActionBase action)
 	{
 		if (!action.Enabled) return;
 		if (!action.canActivate()) return;
 		if (action.Active) return;
 		action.Activavte();
+		this.UpdateAnimator();
 	}
+	/// <summary>
+	/// 角色尝试停止行为
+	/// </summary>
+	/// <param name="action">被停止的行为</param>
 	public void tryDeactivateAction(GameActionBase action)
 	{
 		if (!action.Enabled) return;
 		if (!action.canDeactivate()) return;
 		if (!action.Active) return;
 		action.Deactivate();
+		this.UpdateAnimator();
 	}
 
+	/// <summary>
+	/// 将玩家输入传入给行为，让其判断是否启动
+	/// </summary>
+	/// <param name="input">玩家输入</param>
 	private void UpdateInputActions(PlayerInput input)
 	{
 		if (this.actions == null) return;
@@ -119,6 +133,9 @@ public class CharacterLocomotion : MonoBehaviour
 
 	}
 
+	/// <summary>
+	/// 让自动启动的行为根据情况判断是否启用或停止
+	/// </summary>
 	private void UpdateAutoActions()
 	{
 		if (this.actions == null) return;
