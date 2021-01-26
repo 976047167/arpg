@@ -111,10 +111,7 @@ public class CharacterLocomotion : MonoBehaviour
 		{
 
 			GameActionBase action = actions[i];
-			if (!action.Enabled)
-			{
-				continue;
-			}
+			if (!action.Enabled) continue;
 			if (action.Active)
 			{
 				if (action.canDeactivate(input))
@@ -142,10 +139,7 @@ public class CharacterLocomotion : MonoBehaviour
 		for (int i = 0; i < this.actions.Length; i++)
 		{
 			GameActionBase action = actions[i];
-			if (!action.Enabled)
-			{
-				continue;
-			}
+			if (!action.Enabled) continue;
 			if (action.Active && action.StopType == StopType.Automatic)
 			{
 				this.tryDeactivateAction(action);
@@ -161,7 +155,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// 根据行为数据更新动画
 	/// </summary>
 	/// <param name="immediateUpdate">是否立即更新,否则将在下一次fixupdate更新</param>
-	private void UpdateAnimator(bool immediateUpdate =false)
+	private void UpdateAnimator(bool immediateUpdate = false)
 	{
 		if (this.animator == null) return;
 		//是否立即更新,否则将在下一次fixupdate更新
@@ -173,12 +167,36 @@ public class CharacterLocomotion : MonoBehaviour
 		//如果没有行为变化，不用更新动画
 		if (!this.isAnimatorDirty) return;
 		this.isAnimatorDirty = false;
+		int idx = 0;
+		bool idxChange = false;
+		int argInt = 0;
+		bool intChange = false;
+		float argFloat = 0f;
+		bool floatChange = false;
 		for (int i = 0; i < this.actions.Length; i++)
 		{
 			var action = this.actions[i];
 			if (!action.Active) continue;
+			if (!idxChange&& action.AnimatorIndex != -1)
+			{
+				idx = action.AnimatorIndex;
+				idxChange = true;
+			}
+			//idx可能为0，后续数值为0状态下的动画参数
+			if (!intChange && action.AnimatorInt != -1)
+			{
+				argInt = action.AnimatorInt ;
+				intChange = true;
 
+			}
+			if (!floatChange && action.AnimatorFloat != -1)
+			{
+				argFloat = action.AnimatorFloat ;
+				floatChange = true;
+			}
 		}
+		this.animator.SetAnimatorIdx(idx);
+
 
 	}
 }
