@@ -11,3 +11,6 @@ public static class AnimatorHash
 	public static int ArgInt = Animator.StringToHash("ArgInt");
 	public static int ArgFloat = Animator.StringToHash("ArgFloat");
 }
+public static class GameEvent{
+	public static int OnMoving ="onMoving".GetHashCode();
+}
