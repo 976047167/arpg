@@ -7,6 +7,28 @@ public static class Notification
 	private static Dictionary<Type,KeyValuePair<int, HashSet<int>>> BindMap = new Dictionary<Type,KeyValuePair<int,HashSet<int>>>();
 	private static List<object> Callbacks = new List<object>();
 
+	public static void CreateBinding(int EventHash, Action callback)
+	{
+		Type t = typeof(Action);
+		AddBinding(t, EventHash, callback);
+	}
+	public static void Emit(int EventHash)
+	{
+		var bindings = GetBinding<Action>(EventHash);
+		for (int i = 0; i < bindings.Length; i++)
+		{
+			bindings[i]();
+		}
+	}
+	public static void RemoveBinding(int hash,Action callback)
+	{
+		int idx = Callbacks.IndexOf(callback);
+		if(idx == -1)return;
+		Type t = typeof(Action);
+		RemoveBinding(t, idx);
+	}
+
+
 	public static void CreateBinding<T>(int EventHash, Action<T> callback)
 	{
 		Type t = typeof(Action<T>);
@@ -25,6 +47,27 @@ public static class Notification
 		int idx = Callbacks.IndexOf(callback);
 		if(idx == -1)return;
 		Type t = typeof(Action<T>);
+		RemoveBinding(t, idx);
+	}
+
+	public static void CreateBinding<T1,T2>(int EventHash, Action<T1,T2> callback)
+	{
+		Type t = typeof(Action<T1,T2>);
+		AddBinding(t, EventHash, callback);
+	}
+	public static void Emit<T1,T2>(int EventHash, T1 arg1,T2 arg2)
+	{
+		var bindings = GetBinding<Action<T1,T2>>(EventHash);
+		for (int i = 0; i < bindings.Length; i++)
+		{
+			bindings[i](arg1,arg2);
+		}
+	}
+	public static void RemoveBinding<T1,T2>(int hash,Action<T1,T2> callback)
+	{
+		int idx = Callbacks.IndexOf(callback);
+		if(idx == -1)return;
+		Type t = typeof(Action<T1,T2>);
 		RemoveBinding(t, idx);
 	}
 
