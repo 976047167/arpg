@@ -30,9 +30,7 @@ public class CharacterLocomotion : MonoBehaviour
 		rigidbody.isKinematic = true;
 		rigidbody.constraints = RigidbodyConstraints.FreezeAll;
 		this.actions = new GameActionBase[0];
-	}
-	private void Start()
-	{
+		this.AddAction(ACTION_TYPE.StartMove);
 	}
 
 	/// <summary>
@@ -198,5 +196,13 @@ public class CharacterLocomotion : MonoBehaviour
 		this.animator.SetAnimatorIdx(idx);
 
 
+	}
+	public void AddAction(ACTION_TYPE type)
+	{
+		var action = GameActionFactory.GetAction(type);
+		int length = this.actions.Length;
+		Array.Resize(ref this.actions, length + 1);
+		this.actions[length] = action;
+		action.Initialize(this, 0);
 	}
 }
