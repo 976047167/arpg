@@ -24,7 +24,7 @@ namespace GameAction
 	{
 		public bool NeedMove;
 		/// <summary>
-		/// 动作是可以使用
+		/// 动作是否可以使用
 		/// </summary>
 		public bool Enabled;
 

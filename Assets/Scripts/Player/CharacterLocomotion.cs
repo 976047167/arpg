@@ -194,12 +194,15 @@ public class CharacterLocomotion : MonoBehaviour
 			}
 		}
 		this.animator.SetAnimatorIdx(idx);
+		this.animator.SetAnimatorInt(argInt);
+		this.animator.SetAnimatorFloat(argFloat);
 
 
 	}
 	public void AddAction(ACTION_TYPE type)
 	{
 		var action = GameActionFactory.GetAction(type);
+		action.Enabled = true;
 		int length = this.actions.Length;
 		Array.Resize(ref this.actions, length + 1);
 		this.actions[length] = action;

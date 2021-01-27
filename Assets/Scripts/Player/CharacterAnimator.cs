@@ -11,7 +11,7 @@ public class CharacterAnimator : MonoBehaviour
 	private void Awake()
     {
         mRigid = GetComponent<Rigidbody>();
-        _animator = GetComponentInChildren<Animator>();
+        _animator = GetComponent<Animator>();
     }
     private void Start() {
         

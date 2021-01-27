@@ -6,7 +6,7 @@ namespace GameAction
 	/// 开始移动的行为，用于启动不同的动画
 	/// </summary>
 	[GameActionType(ACTION_TYPE.StartMove)]
-	[AnimatorIndex(1)]
+	[AnimatorIndex(6)]
 	public class StartMove : GameActionBase
 	{
 		private enum StartIndex

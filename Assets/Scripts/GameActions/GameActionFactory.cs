@@ -15,6 +15,7 @@ namespace GameAction
 		{
 			if(_init) return;
 			m_typeMap = new Dictionary<int, Type>();
+			cacheAnimatorIdx = new Dictionary<int, int>();
 			Assembly asm = Assembly.GetExecutingAssembly();
 			Type[] types = asm.GetTypes();
 			foreach (var t in types)
@@ -52,12 +53,12 @@ namespace GameAction
 		private static void setActionValue(GameActionBase action,int actionType)
 		{
 			action.type =(ACTION_TYPE)actionType ;
-			int animatorIdx = -1;
+			int animatorIdx;
 			Type classType = action.GetType();
 			//先在缓存中找是否可以直接读取
-			cacheAnimatorIdx.TryGetValue(actionType,out animatorIdx);
+			bool find = cacheAnimatorIdx.TryGetValue(actionType,out animatorIdx);
 			//缓存中没找到则反射读取attribute
-			if (animatorIdx == -1 )
+			if (!find )
 			{
 				var atrArry = classType.GetCustomAttributes(typeof(AnimatorIndex), true);
 				if (atrArry.Length > 0)
@@ -65,6 +66,8 @@ namespace GameAction
 					var attr = atrArry[0] as AnimatorIndex;
 					animatorIdx = attr.idx; ;
 				}
+			}else{
+				animatorIdx = -1;
 			}
 			cacheAnimatorIdx[actionType] = animatorIdx;
 			action.AnimatorIndex = animatorIdx;
