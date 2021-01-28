@@ -9,12 +9,14 @@ using GameAction;
 /// 可以放在任何角色上
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
+[DisallowMultipleComponent]
 public class CharacterLocomotion : MonoBehaviour
 {
 	public float speed;
 	private PlayerController controller;
 	private CharacterAnimator animator;
 	private Vector2 InputVector = Vector2.zero;
+	private bool Moving = false;
 	private Transform cameraTrans;
 	private bool isAnimatorDirty;
 	public GameActionBase[] actions;
@@ -68,6 +70,7 @@ public class CharacterLocomotion : MonoBehaviour
 	{
 		this.UpdateAutoActions();
 		this.UpdateAnimator(true);
+		this.UpdateMoveState();
 	}
 	private void OnAnimatorMove()
 	{
@@ -175,7 +178,7 @@ public class CharacterLocomotion : MonoBehaviour
 		{
 			var action = this.actions[i];
 			if (!action.Active) continue;
-			if (!idxChange&& action.AnimatorIndex != -1)
+			if (!idxChange && action.AnimatorIndex != -1)
 			{
 				idx = action.AnimatorIndex;
 				idxChange = true;
@@ -183,13 +186,13 @@ public class CharacterLocomotion : MonoBehaviour
 			//idx可能为0，后续数值为0状态下的动画参数
 			if (!intChange && action.AnimatorInt != -1)
 			{
-				argInt = action.AnimatorInt ;
+				argInt = action.AnimatorInt;
 				intChange = true;
 
 			}
 			if (!floatChange && action.AnimatorFloat != -1)
 			{
-				argFloat = action.AnimatorFloat ;
+				argFloat = action.AnimatorFloat;
 				floatChange = true;
 			}
 		}
@@ -206,6 +209,16 @@ public class CharacterLocomotion : MonoBehaviour
 		int length = this.actions.Length;
 		Array.Resize(ref this.actions, length + 1);
 		this.actions[length] = action;
-		action.Initialize(this, 0);
+		action.Initialize(this);
+	}
+	private void UpdateMoveState()
+	{
+
+		bool temp = this.Moving;
+		this.Moving = this.InputVector.magnitude > 0.01f;
+		if (this.Moving != temp)
+		{
+			Notification.Emit<CharacterLocomotion, bool>(GameEvent.OnMoving, this, this.Moving);
+		}
 	}
 }

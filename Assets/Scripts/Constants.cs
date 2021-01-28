@@ -13,4 +13,5 @@ public static class AnimatorHash
 }
 public static class GameEvent{
 	public static int OnMoving ="onMoving".GetHashCode();
+	public static int AnimationEvent ="AnimationEvent".GetHashCode();
 }

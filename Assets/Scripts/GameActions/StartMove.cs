@@ -9,6 +9,7 @@ namespace GameAction
 	[AnimatorIndex(6)]
 	public class StartMove : GameActionBase
 	{
+		private bool moving = false;
 		private enum StartIndex
 		{
 			None,
@@ -29,31 +30,37 @@ namespace GameAction
 			RunBackwardTurnLeft,
 			RunBackwardTurnRight
 		}
-
-		public override bool canActivate(PlayerInput input)
+		public override void Initialize(CharacterLocomotion owner)
 		{
-			if (!base.canActivate(input))
+			base.Initialize(owner);
+			Notification.CreateBinding<CharacterLocomotion, bool>(GameEvent.OnMoving, this.onMoving);
+		}
+		public override bool canActivate()
+		{
+			if (!base.canActivate())
 			{
 				return false;
 			}
 
+			if (this.moving ) return false;
 			// The ability can't start if the character is stopped.
-			if (input.getDirection().magnitude == 0)
+			if (this.ownerLocomotion.GetInputVector().magnitude == 0)
 			{
 				return false;
 			}
+
 			return true;
 		}
 
-		public override bool canDeactivate(PlayerInput input)
+		public override bool canDeactivate()
 		{
-			if (!base.canDeactivate(input))
+			if (!base.canDeactivate())
 			{
 				return false;
 			}
 
 			// The ability can't start if the character is stopped.
-			if (input.getDirection().magnitude > 0)
+			if (this.ownerLocomotion.GetInputVector().magnitude > 0)
 			{
 				return false;
 			}
@@ -134,6 +141,16 @@ namespace GameAction
 
 			base.Activavte();
 		}
-
+		public override void Release()
+		{
+			Notification.RemoveBinding<CharacterLocomotion, bool>(GameEvent.OnMoving, this.onMoving);
+			base.Release();
+		}
+		private void onMoving(CharacterLocomotion locomotion,bool state)
+		{
+			if(this.ownerLocomotion != locomotion) return;
+			this.moving = state;
+		}
 	}
+
 }

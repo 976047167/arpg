@@ -1,18 +1,18 @@
 using UnityEngine;
-[RequireComponent(typeof(Rigidbody))]
+[DisallowMultipleComponent]
 public class CharacterAnimator : MonoBehaviour
 {
 
-    private Rigidbody mRigid;
     public Animator _animator;
+	private CharacterLocomotion locomotion;
 	private int Index;
 	private int ArgInt;
 	private float ArgFloat;
 	private void Awake()
     {
-        mRigid = GetComponent<Rigidbody>();
-        _animator = GetComponent<Animator>();
-    }
+        _animator = this.GetComponent<Animator>();
+		locomotion = this.GetComponent<CharacterLocomotion>();
+	}
     private void Start() {
         
     }
@@ -39,5 +39,9 @@ public class CharacterAnimator : MonoBehaviour
 		if (num == this.ArgFloat)return;
 		this.ArgFloat = num;
 		this._animator.SetFloat(AnimatorHash.ArgFloat, num);
+	}
+	public void ExecuteEvent(string arg1)
+	{
+		Notification.Emit<CharacterLocomotion, string>(GameEvent.AnimationEvent, this.locomotion, arg1);
 	}
 }

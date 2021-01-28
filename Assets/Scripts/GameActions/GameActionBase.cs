@@ -45,30 +45,32 @@ namespace GameAction
 		protected Transform transform;
 
 		public virtual ACTION_TYPE type {get; internal set;}
-		public int index;
-		public virtual void Initialize(CharacterLocomotion owner, int index)
+		public virtual void Initialize(CharacterLocomotion owner)
 		{
 			this.ownerLocomotion = owner;
 			this.ActiveCount = 0;
 			this.gameObject = owner.gameObject;
 			this.transform = owner.transform;
 			this.playerAnimator = gameObject.GetComponent<CharacterLocomotion>();
-			this.index = index;
 		}
 		public virtual bool canActivate()
 		{
+			if(this.StartType != StartType.Automatic) return false;
 			return true;
 		}
 		public virtual bool canActivate(PlayerInput input)
 		{
+			if(this.StartType == StartType.Automatic) return false;
 			return true;
 		}
 		public virtual bool canDeactivate()
 		{
+			if(this.StopType != StopType.Automatic) return false;
 			return true;
 		}
 		public virtual bool canDeactivate(PlayerInput input)
 		{
+			if(this.StopType == StopType.Automatic) return false;
 			return true;
 		}
 		public virtual void Activavte()
@@ -82,6 +84,10 @@ namespace GameAction
 			this.Active = false;
 		}
 
+		public virtual void Release()
+		{
+
+		}
 
 	}
 }
