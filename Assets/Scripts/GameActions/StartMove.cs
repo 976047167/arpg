@@ -10,6 +10,7 @@ namespace GameAction
 	public class StartMove : GameActionBase
 	{
 		private bool moving = false;
+		private bool animationFinished = false;
 		private enum StartIndex
 		{
 			None,
@@ -34,6 +35,7 @@ namespace GameAction
 		{
 			base.Initialize(owner);
 			Notification.CreateBinding<CharacterLocomotion, bool>(GameEvent.OnMoving, this.onMoving);
+			Notification.CreateBinding<CharacterLocomotion,string>(GameEvent.AnimationEvent, this.OnAnimationEvent);
 		}
 		public override bool canActivate()
 		{
@@ -58,7 +60,7 @@ namespace GameAction
 			{
 				return false;
 			}
-
+			if(animationFinished)return true;
 			// The ability can't start if the character is stopped.
 			if (this.ownerLocomotion.GetInputVector().magnitude > 0)
 			{
@@ -138,18 +140,26 @@ namespace GameAction
 				moveArg = (int)StartIndex.WalkStrafeLeft;
 			}
 			this.AnimatorInt = moveArg;
+			this.animationFinished = false;
 
 			base.Activavte();
-		}
-		public override void Release()
-		{
-			Notification.RemoveBinding<CharacterLocomotion, bool>(GameEvent.OnMoving, this.onMoving);
-			base.Release();
 		}
 		private void onMoving(CharacterLocomotion locomotion,bool state)
 		{
 			if(this.ownerLocomotion != locomotion) return;
 			this.moving = state;
+		}
+		private void OnAnimationEvent(CharacterLocomotion locomotion,string evnet)
+		{
+			if(this.ownerLocomotion != locomotion) return;
+			if(evnet != "OnAnimatorStartMovementComplete")return;
+			this.animationFinished = true;
+		}
+		public override void Release()
+		{
+			Notification.RemoveBinding<CharacterLocomotion, bool>(GameEvent.OnMoving, this.onMoving);
+			Notification.RemoveBinding<CharacterLocomotion,string>(GameEvent.AnimationEvent, this.OnAnimationEvent);
+			base.Release();
 		}
 	}
 
