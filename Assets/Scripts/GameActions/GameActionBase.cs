@@ -3,7 +3,7 @@ namespace GameAction
 {
 
 	//动作启动方式
-	public enum StartType
+	public enum START_TYPE
 	{
 		// 自动启动,每个update都会调用启动
 		Automatic,
@@ -12,7 +12,7 @@ namespace GameAction
 		Manual,
 	}
 	//动作停止的方式
-	public enum StopType
+	public enum STOP_TYPE
 	{
 		// 自动启动,每个update都会调用启动
 		Automatic,
@@ -32,8 +32,8 @@ namespace GameAction
 		/// 动作正在执行中
 		/// </summary>
 		public bool Active { get; private set; }
-		public StartType StartType;
-		public StopType StopType;
+		public START_TYPE StartType;
+		public STOP_TYPE StopType;
 		public float ActiveTime { get; private set; }
 		public float ActiveCount { get; private set; }
 		protected CharacterLocomotion ownerLocomotion;
@@ -55,22 +55,22 @@ namespace GameAction
 		}
 		public virtual bool canActivate()
 		{
-			if(this.StartType != StartType.Automatic) return false;
+			if(this.StartType != START_TYPE.Automatic) return false;
 			return true;
 		}
 		public virtual bool canActivate(PlayerInput input)
 		{
-			if(this.StartType == StartType.Automatic) return false;
+			if(this.StartType == START_TYPE.Automatic) return false;
 			return true;
 		}
 		public virtual bool canDeactivate()
 		{
-			if(this.StopType != StopType.Automatic) return false;
+			if(this.StopType != STOP_TYPE.Automatic) return false;
 			return true;
 		}
 		public virtual bool canDeactivate(PlayerInput input)
 		{
-			if(this.StopType == StopType.Automatic) return false;
+			if(this.StopType == STOP_TYPE.Automatic) return false;
 			return true;
 		}
 		public virtual void Activavte()

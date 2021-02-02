@@ -5,12 +5,13 @@ using System.Diagnostics;
 using System.Collections.Generic;
 namespace GameAction
 {
-
 	public static class GameActionFactory
 	{
 		private static bool _init;
 		private static Dictionary<int, Type> m_typeMap;
 		private static Dictionary<int, int> cacheAnimatorIdx;
+		private static Dictionary<int, int> cacheStartType;
+		private static Dictionary<int, int> cacheStopType;
 		public static void Init()
 		{
 			if(_init) return;
@@ -28,7 +29,7 @@ namespace GameAction
 					if (atr is GameActionType)
 					{
 						GameActionType ret = (GameActionType)atr;
-						int idx = (int)ret.type;
+						int idx = (int)ret.value;
 						m_typeMap[idx] = t;
 						break;
 					}
@@ -53,7 +54,13 @@ namespace GameAction
 		private static void setActionValue(GameActionBase action,int actionType)
 		{
 			action.type =(ACTION_TYPE)actionType ;
+			setAnimatorIdx(action);
+
+		}
+		private static void setAnimatorIdx(GameActionBase action)
+		{
 			int animatorIdx;
+			int actionType = (int)action.type;
 			Type classType = action.GetType();
 			//先在缓存中找是否可以直接读取
 			bool find = cacheAnimatorIdx.TryGetValue(actionType,out animatorIdx);
@@ -64,14 +71,60 @@ namespace GameAction
 				if (atrArry.Length > 0)
 				{
 					var attr = atrArry[0] as AnimatorIndex;
-					animatorIdx = attr.idx; ;
+					animatorIdx = attr.value; ;
 				}
 			}else{
 				animatorIdx = -1;
 			}
 			cacheAnimatorIdx[actionType] = animatorIdx;
 			action.AnimatorIndex = animatorIdx;
-
 		}
+
+		private static void setStartType(GameActionBase action)
+		{
+			int value;
+			int actionType = (int)action.type;
+			Type classType = action.GetType();
+			//先在缓存中找是否可以直接读取
+			bool find = cacheStartType.TryGetValue(actionType,out value);
+			//缓存中没找到则反射读取attribute
+			if (!find )
+			{
+				var atrArry = classType.GetCustomAttributes(typeof(StartType), true);
+				if (atrArry.Length > 0)
+				{
+					var attr = atrArry[0] as StartType;
+					value = (int)attr.value; ;
+				}
+			}else{
+				value = 0;
+			}
+			cacheStartType[actionType] = value;
+			action.StartType = (START_TYPE)value;
+		}
+
+		private static void setStopType(GameActionBase action)
+		{
+			int value;
+			int actionType = (int)action.type;
+			Type classType = action.GetType();
+			//先在缓存中找是否可以直接读取
+			bool find = cacheStopType.TryGetValue(actionType,out value);
+			//缓存中没找到则反射读取attribute
+			if (!find )
+			{
+				var atrArry = classType.GetCustomAttributes(typeof(StopType), true);
+				if (atrArry.Length > 0)
+				{
+					var attr = atrArry[0] as StopType;
+					value = (int)attr.value; ;
+				}
+			}else{
+				value = 0;
+			}
+			cacheStopType[actionType] = value;
+			action.StopType = (STOP_TYPE)value;
+		}
+
 	}
 }

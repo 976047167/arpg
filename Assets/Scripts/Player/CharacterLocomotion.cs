@@ -72,10 +72,6 @@ public class CharacterLocomotion : MonoBehaviour
 		this.UpdateAnimator(true);
 		this.UpdateMoveState();
 	}
-	private void OnAnimatorMove()
-	{
-
-	}
 	/// <summary>
 	/// 角色尝试启动行为
 	/// </summary>
@@ -141,11 +137,11 @@ public class CharacterLocomotion : MonoBehaviour
 		{
 			GameActionBase action = actions[i];
 			if (!action.Enabled) continue;
-			if (action.Active && action.StopType == StopType.Automatic)
+			if (action.Active && action.StopType == STOP_TYPE.Automatic)
 			{
 				this.tryDeactivateAction(action);
 			}
-			else if (!action.Active && action.StartType == StartType.Automatic)
+			else if (!action.Active && action.StartType == START_TYPE.Automatic)
 			{
 				this.tryActiveAction(action);
 			}
