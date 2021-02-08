@@ -5,7 +5,6 @@ public class CharacterAnimator : MonoBehaviour
 
     public Animator _animator;
 	private CharacterLocomotion locomotion;
-	private Vector3 AnimatorDeltaPosition = Vector3.zero;
 	private int Index;
 	private int ArgInt;
 
@@ -46,12 +45,7 @@ public class CharacterAnimator : MonoBehaviour
 	{
 		Notification.Emit<CharacterLocomotion, string>(GameEvent.AnimationEvent, this.locomotion, arg1);
 	}
- 	protected void OnAnimatorMove()
-	{
-		this.AnimatorDeltaPosition += this._animator.deltaPosition;
-		if (Time.deltaTime == 0) return;
-		if(this.AnimatorDeltaPosition.magnitude == 0)return;
-
-
+	public Vector3 GetDeltaPos(){
+		return this._animator.deltaPosition;
 	}
 }

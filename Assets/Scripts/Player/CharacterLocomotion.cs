@@ -16,10 +16,13 @@ public class CharacterLocomotion : MonoBehaviour
 	private PlayerController controller;
 	private CharacterAnimator animator;
 	private Vector2 InputVector = Vector2.zero;
+	private Vector3 InputRotation = Vector3.zero;
 	private bool Moving = false;
 	private Transform cameraTrans;
 	private bool isAnimatorDirty;
+	private Vector3 AnimatorDeltaPosition = Vector3.zero;
 	public GameActionBase[] actions;
+	private bool isPlayer;
 	private void Awake()
 	{
 		this.controller = this.GetComponent<PlayerController>();
@@ -43,6 +46,7 @@ public class CharacterLocomotion : MonoBehaviour
 	public void PlayerUpdate(PlayerInput input)
 	{
 		this.SetInputVector(input.getDirection());
+		this.SetInputVector(input.getDirection());
 		this.UpdateInputActions(input);
 	}
 
@@ -54,11 +58,22 @@ public class CharacterLocomotion : MonoBehaviour
 	{
 		this.InputVector.Set(direction.x, direction.y);
 	}
-
-
 	public Vector2 GetInputVector()
 	{
 		return this.InputVector;
+	}
+
+	/// <summary>
+	/// 由AI或者玩家转传来的角色转动方向的向量；
+	/// </summary>
+	/// <param name="direction">转动的方向</param>
+	public void SetInputRotation(float yaw)
+	{
+		this.InputRotation.Set(0,yaw,0);
+	}
+	public Vector3 GetInputRotation()
+	{
+		return this.InputRotation;
 	}
 
 
@@ -71,6 +86,10 @@ public class CharacterLocomotion : MonoBehaviour
 		this.UpdateAutoActions();
 		this.UpdateAnimator(true);
 		this.UpdateMoveState();
+		if(!this.isPlayer){
+			//玩家控制的角色在onAnimatorMove里调用
+			this.UpdatePosAndRota();
+		}
 	}
 	/// <summary>
 	/// 角色尝试启动行为
@@ -216,5 +235,36 @@ public class CharacterLocomotion : MonoBehaviour
 		{
 			Notification.Emit<CharacterLocomotion, bool>(GameEvent.OnMoving, this, this.Moving);
 		}
+	}
+
+ 	protected void OnAnimatorMove()
+	{
+		this.AnimatorDeltaPosition += this.animator.GetDeltaPos();
+		if (Time.deltaTime == 0) return;
+		if(this.AnimatorDeltaPosition.magnitude == 0)return;
+		this.UpdatePosAndRota();
+
+	}
+	private void UpdatePosAndRota(){
+		UpdateRotation();
+	}
+	/// <summary>
+	/// 计算需要旋转的角度
+	/// </summary>
+	private void UpdateRotation()
+	{
+		//当前角度
+		Quaternion curRoation = transform.rotation;
+		//要转到的角度
+		Quaternion targetRotation = Quaternion.Slerp(curRoation , curRoation * Quaternion.Euler(this.InputRotation), Constants.RoundSpeed*Time.deltaTime*Time.timeScale);
+		//两个角度的差值 力矩
+		// Quaternion ret = Quaternion.Inverse(curRoation) * targetRotation;
+
+		Quaternion ret = targetRotation;
+		//结果四舍五入一下
+		this.transform.rotation = MathUtils.Round(ret, 1000000);
+	}
+	private void UpdatePosition(){
+
 	}
 }
