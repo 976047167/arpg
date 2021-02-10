@@ -12,7 +12,7 @@ using GameAction;
 [DisallowMultipleComponent]
 public class CharacterLocomotion : MonoBehaviour
 {
-	public float speed;
+	public float TimeScale =1;
 	private PlayerController controller;
 	private CharacterAnimator animator;
 	private Vector2 InputVector = Vector2.zero;
@@ -21,6 +21,7 @@ public class CharacterLocomotion : MonoBehaviour
 	private Transform cameraTrans;
 	private bool isAnimatorDirty;
 	private Vector3 AnimatorDeltaPosition = Vector3.zero;
+
 	public GameActionBase[] actions;
 	private bool isPlayer;
 	private void Awake()
@@ -69,7 +70,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <param name="direction">转动的方向</param>
 	public void SetInputRotation(float yaw)
 	{
-		this.InputRotation.Set(0,yaw,0);
+		this.InputRotation.Set(0, yaw, 0);
 	}
 	public Vector3 GetInputRotation()
 	{
@@ -81,12 +82,13 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <summary>
 	/// 更新角色状态
 	/// </summary>
-	private void FixedUpdate()
+	private void Update()
 	{
 		this.UpdateAutoActions();
 		this.UpdateAnimator(true);
 		this.UpdateMoveState();
-		if(!this.isPlayer){
+		if (!this.isPlayer)
+		{
 			//玩家控制的角色在onAnimatorMove里调用
 			this.UpdatePosAndRota();
 		}
@@ -237,15 +239,16 @@ public class CharacterLocomotion : MonoBehaviour
 		}
 	}
 
- 	protected void OnAnimatorMove()
+	protected void OnAnimatorMove()
 	{
 		this.AnimatorDeltaPosition += this.animator.GetDeltaPos();
 		if (Time.deltaTime == 0) return;
-		if(this.AnimatorDeltaPosition.magnitude == 0)return;
+		if (this.AnimatorDeltaPosition.magnitude == 0) return;
 		this.UpdatePosAndRota();
 
 	}
-	private void UpdatePosAndRota(){
+	private void UpdatePosAndRota()
+	{
 		UpdateRotation();
 	}
 	/// <summary>
@@ -256,7 +259,7 @@ public class CharacterLocomotion : MonoBehaviour
 		//当前角度
 		Quaternion curRoation = transform.rotation;
 		//要转到的角度
-		Quaternion targetRotation = Quaternion.Slerp(curRoation , curRoation * Quaternion.Euler(this.InputRotation), Constants.RoundSpeed*Time.deltaTime*Time.timeScale);
+		Quaternion targetRotation = Quaternion.Slerp(curRoation, curRoation * Quaternion.Euler(this.InputRotation), Constants.RoundSpeed * TimeUtility.DeltaTimeScaled * this.TimeScale);
 		//两个角度的差值 力矩
 		// Quaternion ret = Quaternion.Inverse(curRoation) * targetRotation;
 
@@ -264,7 +267,10 @@ public class CharacterLocomotion : MonoBehaviour
 		//结果四舍五入一下
 		this.transform.rotation = MathUtils.Round(ret, 1000000);
 	}
-	private void UpdatePosition(){
+	private void UpdatePosition()
+	{
+		//用t的平方可能是之后要与力相乘计算距离
+		float deltaTime = this.TimeScale * this.TimeScale * Time.timeScale * TimeUtility.FramerateDeltaTime;
 
 	}
 }

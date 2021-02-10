@@ -567,11 +567,11 @@ public static class MathUtils
 	}
 
 	/// <summary>
-	/// Rounds the specified value according to the number of decimals.
+	/// vector3的四舍五入
 	/// </summary>
-	/// <param name="value">The value to round.</param>
-	/// <param name="factor">The factor to round to.</param>
-	/// <returns>The roudned value.</returns>
+	/// <param name="value">四舍五入的值</param>
+	/// <param name="factor">需要四舍五入的倍数</param>
+	/// <returns>结果</returns>
 	public static Quaternion Round(Quaternion value, int factor)
 	{
 		value.x = Round(value.x, factor);

@@ -19,8 +19,7 @@ public class PlayerController : MonoBehaviour
         this.locomotion = this.GetComponent<CharacterLocomotion>();
 	}
     private void Start() {
-        
-    }
+	}
     private void Update() {
 		this.locomotion.PlayerUpdate(this.playerInput);
 	}
