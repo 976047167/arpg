@@ -12,6 +12,9 @@ using GameAction;
 [DisallowMultipleComponent]
 public class CharacterLocomotion : MonoBehaviour
 {
+	/// <summary>
+	/// 时间缩放，控制单位动画速度
+	/// </summary>
 	public float TimeScale =1;
 	private PlayerController controller;
 	private CharacterAnimator animator;
@@ -19,11 +22,24 @@ public class CharacterLocomotion : MonoBehaviour
 	private Vector3 InputRotation = Vector3.zero;
 	private bool Moving = false;
 	private Transform cameraTrans;
-	private bool isAnimatorDirty;
+	
 	private Vector3 AnimatorDeltaPosition = Vector3.zero;
 
 	public GameActionBase[] actions;
+	/// <summary>
+	/// 是否动画需要更新
+	/// </summary>
+	private bool isAnimatorDirty;
 	private bool isPlayer;
+	/// <summary>
+	/// 速度
+	/// </summary>
+	/// <value></value>
+	public Vector3 Velocity{get;private set;} 
+	/// <summary>
+	/// 前一帧的位置
+	/// </summary>
+	public Vector3 PrevPosition;
 	private void Awake()
 	{
 		this.controller = this.GetComponent<PlayerController>();
@@ -85,7 +101,7 @@ public class CharacterLocomotion : MonoBehaviour
 	private void Update()
 	{
 		this.UpdateAutoActions();
-		this.UpdateAnimator(true);
+		this.UpdateAnimator();
 		this.UpdateMoveState();
 		if (!this.isPlayer)
 		{
@@ -103,7 +119,7 @@ public class CharacterLocomotion : MonoBehaviour
 		if (!action.canActivate()) return;
 		if (action.Active) return;
 		action.Activavte();
-		this.UpdateAnimator();
+		this.UpdateActionAnimator();
 	}
 	/// <summary>
 	/// 角色尝试停止行为
@@ -115,7 +131,7 @@ public class CharacterLocomotion : MonoBehaviour
 		if (!action.canDeactivate()) return;
 		if (!action.Active) return;
 		action.Deactivate();
-		this.UpdateAnimator();
+		this.UpdateActionAnimator();
 	}
 
 	/// <summary>
@@ -170,12 +186,21 @@ public class CharacterLocomotion : MonoBehaviour
 
 	}
 	/// <summary>
-	/// 根据行为数据更新动画
+	/// 更新Animator的参数
 	/// </summary>
-	/// <param name="immediateUpdate">是否立即更新,否则将在下一次fixupdate更新</param>
-	private void UpdateAnimator(bool immediateUpdate = false)
-	{
+	private void UpdateAnimator(){
+
 		if (this.animator == null) return;
+		
+		this.animator.SetHorizontalMovementParameter(this.InputVector.x, this.TimeScale);
+		this.animator.SetForwardMovementParameter(this.InputVector.y, this.TimeScale);
+		// this.animator.SetYawParameter(m_YawAngle * m_YawMultiplier, this.TimeScale);
+		this.animator.SetMovingParameter(this.Moving);
+
+		this.UpdateActionAnimator(true);
+	}
+	public void UpdateActionAnimator(bool immediateUpdate = false)
+	{
 		//是否立即更新,否则将在下一次fixupdate更新
 		if (!immediateUpdate)
 		{
@@ -216,8 +241,6 @@ public class CharacterLocomotion : MonoBehaviour
 		this.animator.SetAnimatorIdx(idx);
 		this.animator.SetAnimatorInt(argInt);
 		this.animator.SetAnimatorFloat(argFloat);
-
-
 	}
 	public void AddAction(ACTION_TYPE type)
 	{
@@ -250,6 +273,7 @@ public class CharacterLocomotion : MonoBehaviour
 	private void UpdatePosAndRota()
 	{
 		UpdateRotation();
+		UpdatePosition();
 	}
 	/// <summary>
 	/// 计算需要旋转的角度
@@ -271,6 +295,18 @@ public class CharacterLocomotion : MonoBehaviour
 	{
 		//用t的平方可能是之后要与力相乘计算距离
 		float deltaTime = this.TimeScale * this.TimeScale * Time.timeScale * TimeUtility.FramerateDeltaTime;
+		//计算动画位移，别问我为什么成了力
+		Vector3 localMotionForce = this.transform.InverseTransformDirection(this.AnimatorDeltaPosition);
+		this.AnimatorDeltaPosition = Vector3.zero;
+		//实际方向
+        Vector3 motorThrottle = MathUtils.TransformDirection(localMotionForce, this.transform.rotation);
 
+		// MoveDirection += m_ExternalForce * deltaTime + (m_MotorThrottle * (UsingRootMotionPosition ? 1 : deltaTime)) - m_GravityDirection * m_GravityAmount * deltaTime;
+		Vector3 MoveDirection  = motorThrottle;
+
+		this.transform.position = this.transform.position + MoveDirection;
+
+		this.Velocity = (this.transform.position - this.PrevPosition) / (this.TimeScale * Time.deltaTime);
+		this.PrevPosition = this.transform.position;
 	}
 }
