@@ -12,6 +12,7 @@ public class CharacterAnimator : MonoBehaviour
     private float ArgFloat;
     private float HorizontalMovement;
     private float ForwardMovement;
+    private float Yaw;
     private bool Moving;
 
     private void Awake()
@@ -79,6 +80,22 @@ public class CharacterAnimator : MonoBehaviour
             if (Mathf.Abs(this.ForwardMovement) < 0.001f)
             {
                 this.ForwardMovement = 0;
+            }
+        }
+        return change;
+    }
+
+
+    public bool SetYawParameter(float value, float timeScale)
+    {
+        var change = this.Yaw != value;
+        if (change)
+        {
+            this._animator.SetFloat(AnimatorHash.YawHash, value, Constants.DampingTime, TimeUtility.DeltaTimeScaled / timeScale);
+            this.Yaw = this._animator.GetFloat(AnimatorHash.YawHash);
+            if (Mathf.Abs(this.Yaw) < 0.001f)
+            {
+                this.Yaw = 0;
             }
         }
         return change;
