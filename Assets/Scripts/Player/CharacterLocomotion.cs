@@ -55,6 +55,16 @@ public class CharacterLocomotion : MonoBehaviour
 	/// </summary>
 	public Dictionary<RaycastHit, int> ColliderIndexMap;
 
+	/// <summary>
+	/// 单个碰撞体投射结果缓冲，减少创建用的开销
+	/// </summary>
+	private RaycastHit[] RaycastHitsBuffer;
+
+	/// <summary>
+	/// 一帧全部碰撞体投射结果缓冲，减少创建用的开销
+	/// </summary>
+	private RaycastHit[] CombinedRaycastHitsBuffer;
+
 	private void Awake()
 	{
 		this.controller = this.GetComponent<PlayerController>();
@@ -84,6 +94,8 @@ public class CharacterLocomotion : MonoBehaviour
 			this.Collions.Add(colliders[i]);
 		}
 		this.ColliderIndexMap = new Dictionary<RaycastHit, int>(new RaycastUtils.RaycastHitEqualityComparer());
+		this.RaycastHitsBuffer = new RaycastHit[100];
+		this.CombinedRaycastHitsBuffer = new RaycastHit[100 * this.Collions.Count];
 		this.actions = new GameActionBase[0];
 		this.AddAction(ACTION_TYPE.StartMove);
 
@@ -371,31 +383,57 @@ public class CharacterLocomotion : MonoBehaviour
 	{
 		//水平偏移量
 		Vector3 horizontalDirection = Vector3.ProjectOnPlane(moveDirection, Vector3.up);
+		//检测是否有碰撞
+		var hitCount = NonAllocCast(horizontalDirection);
+		if (hitCount == 0) {
+			return;
+		}
 
 	}
-	//投射检测所有碰撞体
-	private bool NonAllocCast(Vector3 direction)
+	/// <summary>
+	/// 投射检测所有碰撞体
+	/// 用来做碰撞预测
+	/// </summary>
+	/// <param name="direction">投射方向的向量</param>
+	/// <returns></returns>
+	private int NonAllocCast(Vector3 direction)
 	{
 		int hitCount = 0;
 		for (int i = 0; i < this.Collions.Count; i++)
 		{
-			RaycastHit[] raycastHits = new RaycastHit[100];
-			bool isHit =false;
+			int hitNums;
 			if(this.Collions[i] is CapsuleCollider){
 				Vector3 firstEndCap, secondEndCap;
 				CapsuleCollider collider = this.Collions[i] as CapsuleCollider;
 				MathUtils.CapsuleColliderEndCaps(collider, collider.transform.position , collider.transform.rotation, out firstEndCap, out secondEndCap);
 				//半径
 				float radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
-				int hitNums = Physics.CapsuleCastNonAlloc(firstEndCap, secondEndCap, radius, direction.normalized,raycastHits, direction.magnitude + Constants.ColliderSpacing);
-				isHit = hitNums > 0;
+				hitNums = Physics.CapsuleCastNonAlloc(firstEndCap, secondEndCap, radius, direction.normalized,RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing);
 			}else{//只剩下SphereCollider
 				SphereCollider collider = this.Collions[i] as SphereCollider;
-
+				var radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
+				hitNums = Physics.SphereCastNonAlloc(collider.transform.TransformPoint(collider.center) , radius, direction.normalized, RaycastHitsBuffer, direction.magnitude +Constants.ColliderSpacing);
 			}
-			
+			if(hitNums>0){
+				int validHitCount = 0;
+				for (int j = 0; j < hitNums; ++j) {
+					if (this.ColliderIndexMap.ContainsKey(RaycastHitsBuffer[j])) {
+						continue;
+					}
+					//检测缓冲数组是否够用
+					if (hitCount + j >= this.CombinedRaycastHitsBuffer.Length) {
+						Debug.LogWarning("投射数组溢出，请分配更多内存");
+						continue;
+					}
+
+					this.ColliderIndexMap.Add(RaycastHitsBuffer[j], i);
+					this.CombinedRaycastHitsBuffer[hitCount + j] = RaycastHitsBuffer[j];
+					validHitCount += 1;
+				}
+				hitCount += validHitCount;	
+			}
 		}
-		return true;
+		return hitCount;
 	}
 
 }
