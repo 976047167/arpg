@@ -12,6 +12,7 @@ using GameAction;
 [DisallowMultipleComponent]
 public class CharacterLocomotion : MonoBehaviour
 {
+
 	/// <summary>
 	/// 时间缩放，控制单位动画速度
 	/// </summary>
@@ -30,6 +31,9 @@ public class CharacterLocomotion : MonoBehaviour
 	/// 是否动画需要更新
 	/// </summary>
 	private bool isAnimatorDirty;
+	/// <summary>
+	/// 该角色是否为玩家
+	/// </summary>
 	private bool isPlayer;
 	/// <summary>
 	/// 速度
@@ -40,9 +44,17 @@ public class CharacterLocomotion : MonoBehaviour
 	/// 前一帧的位置
 	/// </summary>
 	public Vector3 PrevPosition;
+
 	public float YawAngle;
+	/// <summary>
+	/// 碰撞体的位置
+	/// </summary>
 	public List<Collider> Collions;
-	public new Dictionary<RaycastHit, int> ColliderIndexMap;
+	/// <summary>
+	/// 碰撞体和射线相交点的映射
+	/// </summary>
+	public Dictionary<RaycastHit, int> ColliderIndexMap;
+
 	private void Awake()
 	{
 		this.controller = this.GetComponent<PlayerController>();
@@ -71,7 +83,6 @@ public class CharacterLocomotion : MonoBehaviour
 			}
 			this.Collions.Add(colliders[i]);
 		}
-		
 		this.ColliderIndexMap = new Dictionary<RaycastHit, int>(new RaycastUtils.RaycastHitEqualityComparer());
 		this.actions = new GameActionBase[0];
 		this.AddAction(ACTION_TYPE.StartMove);
@@ -362,9 +373,29 @@ public class CharacterLocomotion : MonoBehaviour
 		Vector3 horizontalDirection = Vector3.ProjectOnPlane(moveDirection, Vector3.up);
 
 	}
+	//投射检测所有碰撞体
 	private bool NonAllocCast(Vector3 direction)
 	{
+		int hitCount = 0;
+		for (int i = 0; i < this.Collions.Count; i++)
+		{
+			RaycastHit[] raycastHits = new RaycastHit[100];
+			bool isHit =false;
+			if(this.Collions[i] is CapsuleCollider){
+				Vector3 firstEndCap, secondEndCap;
+				CapsuleCollider collider = this.Collions[i] as CapsuleCollider;
+				MathUtils.CapsuleColliderEndCaps(collider, collider.transform.position , collider.transform.rotation, out firstEndCap, out secondEndCap);
+				//半径
+				float radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
+				int hitNums = Physics.CapsuleCastNonAlloc(firstEndCap, secondEndCap, radius, direction.normalized,raycastHits, direction.magnitude + Constants.ColliderSpacing);
+				isHit = hitNums > 0;
+			}else{//只剩下SphereCollider
+				SphereCollider collider = this.Collions[i] as SphereCollider;
 
+			}
+			
+		}
+		return true;
 	}
 
 }

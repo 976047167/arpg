@@ -125,13 +125,13 @@ public static class MathUtils
 	}
 
 	/// <summary>
-	/// Determines the endcaps of a capsule.
+	/// 计算胶囊体的顶端
 	/// </summary>
-	/// <param name="capsuleCollider">The CapsuleCollider to determine the endcaps of.</param>
-	/// <param name="position">The position of the CapsuleCollider's transform.</param>
-	/// <param name="rotation">The rotation of the CapsuleCollider's transform.</param>
-	/// <param name="firstEndCap">The first resulting endcap.</param>
-	/// <param name="secondEndCap">The second resulting endcap.</param>
+	/// <param name="capsuleCollider">用于计算的碰撞器球心.</param>
+	/// <param name="position">位置</param>
+	/// <param name="rotation">旋转.</param>
+	/// <param name="firstEndCap">结果1</param>
+	/// <param name="secondEndCap">结果2</param>
 	public static void CapsuleColliderEndCaps(CapsuleCollider capsuleCollider, Vector3 position, Quaternion rotation, out Vector3 firstEndCap, out Vector3 secondEndCap)
 	{
 		var direction = CapsuleColliderDirection(capsuleCollider);

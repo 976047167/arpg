@@ -13,6 +13,9 @@ public static class Constants
     public static float SmoothLookWeight = 0.5f;
     public static float SmoothExponent = 1.05f;
     public static float LookAccelerationThreshold = 0.4f;
+	public static float ColliderSpacing = 0.01f;
+	public static float ColliderSpacingCubed = ColliderSpacing * ColliderSpacing * ColliderSpacing * ColliderSpacing;
+	public static float SlopeLimitSpacing = 0.3f;
 }
 public static class TimeUtility
 {
