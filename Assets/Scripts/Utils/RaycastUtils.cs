@@ -4,10 +4,13 @@ using UnityEngine;
 public static class RaycastUtils
 {
 
+	public static  IComparer<RaycastHit> RaycastHitComparer = new raycastHitComparer();
+	public static  IEqualityComparer<RaycastHit> RaycastHitEqualityComparer= new raycastHitEqualityComparer();
+
 	/// <summary>
 	/// Allows for comparison between RaycastHit objects.
 	/// </summary>
-	public class RaycastHitComparer : IComparer<RaycastHit>
+	private class raycastHitComparer : IComparer<RaycastHit>
 	{
 		/// <summary>
 		/// Compare RaycastHit x to RaycastHit y. If x has a smaller distance value compared to y then a negative value will be returned.
@@ -33,7 +36,7 @@ public static class RaycastUtils
 	/// <summary>
 	/// Allows for equity comparison checks between RaycastHit objects.
 	/// </summary>
-	public struct RaycastHitEqualityComparer : IEqualityComparer<RaycastHit>
+	private struct raycastHitEqualityComparer : IEqualityComparer<RaycastHit>
 	{
 		/// <summary>
 		/// Determines if RaycastHit x is equal to RaycastHit y.

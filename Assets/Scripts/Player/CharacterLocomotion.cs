@@ -93,7 +93,7 @@ public class CharacterLocomotion : MonoBehaviour
 			}
 			this.Collions.Add(colliders[i]);
 		}
-		this.ColliderIndexMap = new Dictionary<RaycastHit, int>(new RaycastUtils.RaycastHitEqualityComparer());
+		this.ColliderIndexMap = new Dictionary<RaycastHit, int>(RaycastUtils.RaycastHitEqualityComparer);
 		this.RaycastHitsBuffer = new RaycastHit[100];
 		this.CombinedRaycastHitsBuffer = new RaycastHit[100 * this.Collions.Count];
 		this.actions = new GameActionBase[0];
@@ -371,22 +371,35 @@ public class CharacterLocomotion : MonoBehaviour
 
 		// MoveDirection += m_ExternalForce * deltaTime + (m_MotorThrottle * (UsingRootMotionPosition ? 1 : deltaTime)) - m_GravityDirection * m_GravityAmount * deltaTime;
 		Vector3 MoveDirection = motorThrottle;
-		this.DeflectHorizontalCollisions(MoveDirection);
+		//计算在水平面方向上的碰撞,输出碰撞后的移动值
+		this.DeflectHorizontalCollisions(ref MoveDirection);
 
 		this.transform.position = this.transform.position + MoveDirection;
 
 		this.Velocity = (this.transform.position - this.PrevPosition) / (this.TimeScale * Time.deltaTime);
 		this.PrevPosition = this.transform.position;
 	}
-	//计算在水平面方向上的碰撞
-	private void DeflectHorizontalCollisions(Vector3 moveDirection)
+	private void DeflectHorizontalCollisions(ref Vector3 moveDirection)
 	{
 		//水平偏移量
 		Vector3 horizontalDirection = Vector3.ProjectOnPlane(moveDirection, Vector3.up);
+		//移动量不够，则清零世界方向的水平移动
+		Vector3 gDir = this.transform.InverseTransformDirection(moveDirection);
+		if(horizontalDirection.sqrMagnitude < Constants.ColliderSpacingCubed){
+			gDir.x = gDir.z = 0;
+			moveDirection = this.transform.TransformDirection(gDir);
+			return;
+		}
 		//检测是否有碰撞
 		var hitCount = NonAllocCast(horizontalDirection);
 		if (hitCount == 0) {
 			return;
+		}
+		for (int i = 0; i < hitCount; i++)
+		{
+			var closestRaycastHit = QuickSelect.SmallestK(this.CombinedRaycastHitsBuffer, hitCount, i,RaycastUtils.RaycastHitComparer);
+
+			
 		}
 
 	}

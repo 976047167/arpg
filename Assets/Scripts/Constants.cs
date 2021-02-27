@@ -25,9 +25,9 @@ public static class TimeUtility
     }
     public static float FramerateDeltaTime
     {
-        get { return Time.deltaTime * c_TargetFramerate; }
+        get { return Time.deltaTime * TargetFramerate; }
     }
-    private const int c_TargetFramerate = 60;
+    private const int TargetFramerate = 60;
 }
 public static class AnimatorHash
 {
