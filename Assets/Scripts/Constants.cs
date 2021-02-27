@@ -16,6 +16,8 @@ public static class Constants
 	public static float ColliderSpacing = 0.01f;
 	public static float ColliderSpacingCubed = ColliderSpacing * ColliderSpacing * ColliderSpacing * ColliderSpacing;
 	public static float SlopeLimitSpacing = 0.3f;
+	public static int MaxOverlapIterations= 6;
+
 }
 public static class TimeUtility
 {
