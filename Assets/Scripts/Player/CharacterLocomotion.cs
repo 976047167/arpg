@@ -529,6 +529,15 @@ public class CharacterLocomotion : MonoBehaviour
 
                 }
             }
+            // 不是斜坡的情况，碰到墙壁
+            // 如果碰到墙壁，应该沿着墙的方向移动
+            var hitNormal = Vector3.ProjectOnPlane(closestRaycastHit.normal, Vector3.up).normalized;
+            var targetDirection = Vector3.Cross(hitNormal, Vector3.up).normalized;
+            var closestPoint = MathUtils.ClosestPointOnCollider(this.transform, starter, closestRaycastHit.point, moveDirection, true, false);
+            if ((Vector3.Dot(Vector3.Cross(Vector3.ProjectOnPlane(this.transform.position - closestPoint, Vector3.up).normalized, horizontalDirection).normalized, Vector3.up)) > 0)
+            {
+                targetDirection = -targetDirection;
+            }
 
         }
 
