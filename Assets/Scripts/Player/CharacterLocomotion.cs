@@ -25,6 +25,10 @@ public class CharacterLocomotion : MonoBehaviour
     private Transform cameraTrans;
 
     private Vector3 AnimatorDeltaPosition = Vector3.zero;
+    /// <summary>
+    /// 用来计算的质量值，不是给刚体组件用的
+    /// </summary>
+    private float Mass = 100;
 
     public GameActionBase[] actions;
     /// <summary>
@@ -69,6 +73,16 @@ public class CharacterLocomotion : MonoBehaviour
     /// 重叠的碰撞器缓冲
     /// </summary>
     private Collider[] OverlapColliderBuffer;
+    /// <summary>
+    /// 是否在地面
+    /// </summary>
+    private bool grounded;
+
+    //减少gc用的变量
+    private RaycastHit RaycastHit;
+    //用来手动计算击中法线的变量
+    private Ray FixRay = new Ray();
+    private float Radius;
     private void Awake()
     {
         this.controller = this.GetComponent<PlayerController>();
@@ -85,16 +99,32 @@ public class CharacterLocomotion : MonoBehaviour
         var colliders = this.GetComponentsInChildren<Collider>();
         for (int i = 0; i < colliders.Length; ++i)
         {
-            //只计算球碰撞和胶囊体碰撞，其他碰撞暂时忽略
-            if (!(colliders[i] is CapsuleCollider || colliders[i] is SphereCollider))
-            {
-                continue;
-            }
             //触发器不要
             if (!colliders[i].enabled || colliders[i].isTrigger)
             {
                 continue;
             }
+            //只计算球碰撞和胶囊体碰撞，其他碰撞暂时忽略
+            if (!(colliders[i] is CapsuleCollider || colliders[i] is SphereCollider))
+            {
+                continue;
+            }
+            //todo:后期加一个mask检测，只检测身体的，忽略武器的碰撞
+            //身体有多个检测碰撞时，取最小值半径。
+            var radius = float.MaxValue;
+            if (colliders[i] is CapsuleCollider)
+            {
+                radius = (colliders[i] as CapsuleCollider).radius;
+            }
+            else
+            { // SphereCollider.
+                radius = (colliders[i] as SphereCollider).radius;
+            }
+            if (radius < this.Radius)
+            {
+                this.Radius = radius;
+            }
+
             this.Colliders.Add(colliders[i]);
         }
         this.ColliderIndexMap = new Dictionary<RaycastHit, int>(RaycastUtils.RaycastHitEqualityComparer);
@@ -413,7 +443,7 @@ public class CharacterLocomotion : MonoBehaviour
             int idx = this.ColliderIndexMap[this.CombinedRaycastHitsBuffer[i]];
             Collider starter = this.Colliders[idx];
 
-            //如果距离为0，则两个碰撞器碰撞，需要计算反穿透
+            //如果距离为0，则两个碰撞器重叠，可能是速度过快产生穿透，需要计算反穿透
             if (closestRaycastHit.distance == 0)
             {
                 var offset = Vector3.zero;
@@ -429,6 +459,75 @@ public class CharacterLocomotion : MonoBehaviour
                     moveDirection = Vector3.zero;
                 }
                 break;
+            }
+            // 对其他刚体施加力,检测是否推动
+            GameObject hitGameObject = closestRaycastHit.transform.gameObject;
+            Rigidbody hitRigidbody = hitGameObject.GetComponentInParent<Rigidbody>();
+            bool canStep = true;
+            if (hitRigidbody != null)
+            {
+                var radius = (starter is CapsuleCollider ?
+                                ((starter as CapsuleCollider).radius * MathUtils.ColliderRadiusMultiplier(starter as CapsuleCollider)) :
+                                ((starter as SphereCollider).radius * MathUtils.ColliderRadiusMultiplier(starter)));
+                canStep = !PushRigidbody(hitRigidbody, horizontalDirection, closestRaycastHit.point, radius);
+            }
+            //如果没有推动，说明可能是斜坡或者阶梯
+            if (canStep && this.grounded)
+            {
+                // 计算移动点的斜坡高度是否可以上坡
+                var groundPoint = this.transform.InverseTransformPoint(closestRaycastHit.point);
+                if (groundPoint.y <= Constants.MaxStepHeight + Constants.ColliderSpacing)
+                {
+                    //有个bug，如果射线击中球体边缘，raycasthit的法线方向会有问题，这里手动计算法线。
+                    this.FixRay.direction = horizontalDirection.normalized;
+                    this.FixRay.origin = closestRaycastHit.point - this.FixRay.direction * (Constants.ColliderSpacing + 0.1f);
+                    if (!Physics.Raycast(this.FixRay, out this.RaycastHit, (Constants.ColliderSpacing + 0.11f), 1 << hitGameObject.layer, QueryTriggerInteraction.Ignore))
+                    {
+                        this.RaycastHit = closestRaycastHit;
+                    }
+                    //斜率
+                    var slope = Vector3.Angle(Vector3.up, this.RaycastHit.normal);
+                    if (slope <= Constants.SlopeLimit + Constants.SlopeLimitSpacing)
+                    {
+                        //斜率够小(斜坡的情况)，可以直接上
+                        continue;
+                    }
+
+                    //如果斜率过大，可能是台阶
+                    //用高一点的射线检测碰撞，如果没碰到，或者长度更长，说明是个台阶
+                    if (SingleCast(starter, horizontalDirection, (Constants.MaxStepHeight - Constants.ColliderSpacing) * Vector3.up))
+                    {
+                        if ((this.RaycastHit.distance - Constants.ColliderSpacing) < horizontalDirection.magnitude)
+                        {
+                            //是台阶的情况
+                            this.FixRay.direction = horizontalDirection.normalized;
+                            this.FixRay.origin = closestRaycastHit.point - this.FixRay.direction * (Constants.ColliderSpacing + 0.1f);
+                            var normal = this.RaycastHit.normal;
+                            if (Physics.Raycast(this.FixRay, out this.RaycastHit, (Constants.ColliderSpacing + 0.11f), 1 << hitGameObject.layer, QueryTriggerInteraction.Ignore))
+                            {
+                                normal = this.RaycastHit.normal;
+                            }
+                            //计算台阶的斜率
+                            slope = Vector3.Angle(Vector3.up, normal);
+                            if (slope <= Constants.SlopeLimit + Constants.SlopeLimitSpacing)
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //就一层的台阶，直接上
+                        groundPoint.y = 0;
+                        groundPoint = this.transform.TransformPoint(groundPoint);
+                        var direction = groundPoint - this.transform.position;
+                        if (OverlapCount(starter, (direction.normalized * (direction.magnitude + this.Radius * 0.5f)) + (Constants.MaxStepHeight - Constants.ColliderSpacing) * Vector3.up) == 0)
+                        {
+                            continue;
+                        }
+                    }
+
+                }
             }
 
         }
@@ -488,15 +587,15 @@ public class CharacterLocomotion : MonoBehaviour
         return hitCount;
     }
 
-	/// <summary>
-	/// 反穿透封装
-	/// </summary>
-	/// <param name="firstCollider"></param>
-	/// <param name="secondCollider"></param>
-	/// <param name="horizontalDirection">水平方向的偏移</param>
-	/// <param name="constantVelocity">是否保持速度</param>
-	/// <param name="offset">输出offset</param>
-	/// <returns>如果为true则表示offset不足以完全反穿透</returns>
+    /// <summary>
+    /// 反穿透封装
+    /// </summary>
+    /// <param name="firstCollider"></param>
+    /// <param name="secondCollider"></param>
+    /// <param name="horizontalDirection">水平方向的偏移</param>
+    /// <param name="constantVelocity">是否保持速度</param>
+    /// <param name="offset">输出offset</param>
+    /// <returns>如果为true则表示offset不足以完全反穿透</returns>
     private bool ComputePenetration(Collider firstCollider, Collider secondCollider, Vector3 horizontalDirection, bool constantVelocity, out Vector3 offset)
     {
         var iterations = Constants.MaxOverlapIterations;
@@ -504,7 +603,7 @@ public class CharacterLocomotion : MonoBehaviour
         Vector3 direction;
         offset = Vector3.zero;
         var overlap = true;
-		//防止没有走overlapCount函数，提前赋值
+        //防止没有走overlapCount函数，提前赋值
         this.OverlapColliderBuffer[0] = secondCollider;
 
         while (iterations > 0)
@@ -516,7 +615,7 @@ public class CharacterLocomotion : MonoBehaviour
             }
             else
             {
-				//如果不需要反穿透，直接返回
+                //如果不需要反穿透，直接返回
                 offset = Vector3.zero;
                 overlap = false;
                 break;
@@ -560,6 +659,49 @@ public class CharacterLocomotion : MonoBehaviour
             return Physics.OverlapSphereNonAlloc(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset,
                                                     sphereCollider.radius * MathUtils.ColliderRadiusMultiplier(sphereCollider) - Constants.ColliderSpacing,
                                                     this.OverlapColliderBuffer);
+        }
+    }
+    /// <summary>
+    /// 推动刚体
+    /// </summary>
+    /// <param name="targetRigidbody"></param>
+    /// <param name="moveDirection"></param>
+    /// <param name="point"></param>
+    /// <param name="radius"></param>
+    /// <returns></returns>
+    protected bool PushRigidbody(Rigidbody targetRigidbody, Vector3 moveDirection, Vector3 point, float radius)
+    {
+        if (targetRigidbody.isKinematic)
+        {
+            return false;
+        }
+
+        targetRigidbody.AddForceAtPosition((moveDirection / Time.deltaTime) * (this.Mass / targetRigidbody.mass) * 0.01f, point, ForceMode.VelocityChange);
+        return targetRigidbody.velocity.sqrMagnitude > 0.1f;
+    }
+    /// <summary>
+    /// 射线碰撞检测
+    /// </summary>
+    /// <param name="collider"></param>
+    /// <param name="direction"></param>
+    /// <param name="offset"></param>
+    /// <returns></returns>
+    private bool SingleCast(Collider collider, Vector3 direction, Vector3 offset)
+    {
+        if (collider is CapsuleCollider)
+        {
+            Vector3 startEndCap, endEndCap;
+            var capsuleCollider = collider as CapsuleCollider;
+            MathUtils.CapsuleColliderEndCaps(capsuleCollider, capsuleCollider.transform.position + offset, capsuleCollider.transform.rotation, out startEndCap, out endEndCap);
+            var radius = capsuleCollider.radius * MathUtils.ColliderRadiusMultiplier(capsuleCollider) - Constants.ColliderSpacing;
+            return Physics.CapsuleCast(startEndCap, endEndCap, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing);
+        }
+        else
+        { // SphereCollider.
+            var sphereCollider = collider as SphereCollider;
+            var radius = sphereCollider.radius * MathUtils.ColliderRadiusMultiplier(sphereCollider) - Constants.ColliderSpacing;
+            return Physics.SphereCast(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, radius, direction.normalized,
+                                                            out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing);
         }
     }
 }

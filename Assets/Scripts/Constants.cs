@@ -4,7 +4,7 @@ public static class Constants
     public static float SpeedAcceleration = 1.0f;
     public static float RoundSpeed = 10f;
     public static float DampingTime = 0.1f;
-    public static float  YawMultiplier = 7;
+    public static float YawMultiplier = 7;
 
     public static int SmoothLookSteps = 20;
 
@@ -13,10 +13,12 @@ public static class Constants
     public static float SmoothLookWeight = 0.5f;
     public static float SmoothExponent = 1.05f;
     public static float LookAccelerationThreshold = 0.4f;
-	public static float ColliderSpacing = 0.01f;
-	public static float ColliderSpacingCubed = ColliderSpacing * ColliderSpacing * ColliderSpacing * ColliderSpacing;
-	public static float SlopeLimitSpacing = 0.3f;
-	public static int MaxOverlapIterations= 6;
+    public static float ColliderSpacing = 0.01f;
+    public static float ColliderSpacingCubed = ColliderSpacing * ColliderSpacing * ColliderSpacing * ColliderSpacing;
+    public static float MaxStepHeight = 0.35f;
+    public static float SlopeLimit = 40f;
+    public static float SlopeLimitSpacing = 0.3f;
+    public static int MaxOverlapIterations = 6;
 
 }
 public static class TimeUtility
