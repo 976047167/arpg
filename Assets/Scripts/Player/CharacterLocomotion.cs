@@ -444,13 +444,13 @@ public class CharacterLocomotion : MonoBehaviour
         {
             var closestRaycastHit = QuickSelect.SmallestK(this.CombinedRaycastHitsBuffer, hitCount, i, RaycastUtils.RaycastHitComparer);
             int idx = this.ColliderIndexMap[this.CombinedRaycastHitsBuffer[i]];
-            Collider starter = this.Colliders[idx];
+            Collider origin = this.Colliders[idx];
 
             //如果距离为0，则两个碰撞器重叠，可能是速度过快产生穿透，需要计算反穿透
             if (closestRaycastHit.distance == 0)
             {
                 var offset = Vector3.zero;
-                this.ComputePenetration(starter, closestRaycastHit.collider, horizontalDirection, false, out offset);
+                this.ComputePenetration(origin, closestRaycastHit.collider, horizontalDirection, false, out offset);
                 if (offset.sqrMagnitude >= Constants.ColliderSpacingCubed)
                 {
                     moveDistance = Mathf.Max(0, horizontalDirection.magnitude - offset.magnitude - Constants.ColliderSpacing);
@@ -469,9 +469,9 @@ public class CharacterLocomotion : MonoBehaviour
             bool canStep = true;
             if (hitRigidbody != null)
             {
-                var radius = (starter is CapsuleCollider ?
-                                ((starter as CapsuleCollider).radius * MathUtils.ColliderRadiusMultiplier(starter as CapsuleCollider)) :
-                                ((starter as SphereCollider).radius * MathUtils.ColliderRadiusMultiplier(starter)));
+                var radius = (origin is CapsuleCollider ?
+                                ((origin as CapsuleCollider).radius * MathUtils.ColliderRadiusMultiplier(origin as CapsuleCollider)) :
+                                ((origin as SphereCollider).radius * MathUtils.ColliderRadiusMultiplier(origin)));
                 canStep = !PushRigidbody(hitRigidbody, horizontalDirection, closestRaycastHit.point, radius);
             }
             //如果没有推动，说明可能是斜坡或者阶梯
@@ -498,7 +498,7 @@ public class CharacterLocomotion : MonoBehaviour
 
                     //如果斜率过大，可能是台阶
                     //用高一点的射线检测碰撞，如果没碰到，或者长度更长，说明是个台阶
-                    if (SingleCast(starter, horizontalDirection, (Constants.MaxStepHeight - Constants.ColliderSpacing) * Vector3.up))
+                    if (SingleCast(origin, horizontalDirection, (Constants.MaxStepHeight - Constants.ColliderSpacing) * Vector3.up))
                     {
                         if ((this.RaycastHit.distance - Constants.ColliderSpacing) < horizontalDirection.magnitude)
                         {
@@ -524,7 +524,7 @@ public class CharacterLocomotion : MonoBehaviour
                         groundPoint.y = 0;
                         groundPoint = this.transform.TransformPoint(groundPoint);
                         var direction = groundPoint - this.transform.position;
-                        if (OverlapCount(starter, (direction.normalized * (direction.magnitude + this.Radius * 0.5f)) + (Constants.MaxStepHeight - Constants.ColliderSpacing) * Vector3.up) == 0)
+                        if (OverlapCount(origin, (direction.normalized * (direction.magnitude + this.Radius * 0.5f)) + (Constants.MaxStepHeight - Constants.ColliderSpacing) * Vector3.up) == 0)
                         {
                             continue;
                         }
@@ -536,7 +536,7 @@ public class CharacterLocomotion : MonoBehaviour
             // 如果碰到墙壁，应该沿着墙的方向移动
             var hitNormal = Vector3.ProjectOnPlane(closestRaycastHit.normal, Vector3.up).normalized;
             var targetDirection = Vector3.Cross(hitNormal, Vector3.up).normalized;
-            var closestPoint = MathUtils.ClosestPointOnCollider(this.transform, starter, closestRaycastHit.point, moveDirection, true, false);
+            var closestPoint = MathUtils.ClosestPointOnCollider(this.transform, origin, closestRaycastHit.point, moveDirection, true, false);
             if ((Vector3.Dot(Vector3.Cross(Vector3.ProjectOnPlane(this.transform.position - closestPoint, Vector3.up).normalized, horizontalDirection).normalized, Vector3.up)) > 0)
             {
                 targetDirection = -targetDirection;
@@ -549,7 +549,7 @@ public class CharacterLocomotion : MonoBehaviour
 				moveDistance = 0;
 			}
 			//根据物理材质计算摩擦力
-			var dynamicFrictionValue = Mathf.Clamp01(1 - MathUtils.FrictionValue(starter.material, closestRaycastHit.collider.material, true));
+			var dynamicFrictionValue = Mathf.Clamp01(1 - MathUtils.FrictionValue(origin.material, closestRaycastHit.collider.material, true));
 			//力量系数为1-cos值
 			hitStrength = 1 - Vector3.Dot(horizontalDirection.normalized, -hitNormal);
 			hitMoveDirection = targetDirection * (horizontalDirection.magnitude - moveDistance) * (hitStrength < 0.1f ? 0 : 1.5f) * dynamicFrictionValue;
@@ -560,7 +560,69 @@ public class CharacterLocomotion : MonoBehaviour
 			moveDirection = (horizontalDirection.normalized * moveDistance) + hitMoveDirection + Vector3.up * localDir.y;
 			break;
 		}
+		ResetCombinedRaycastHits();
+		
+		//在墙角可能被挤出去
+		//做第二次检测，确保被第一次弹出的方向的位置是可以使用的
+		if (hitStrength > 0.0001f) {
+			hitCount = NonAllocCast(hitMoveDirection);
+			for (int i = 0; i < hitCount; ++i) {
+				var closestRaycastHit = QuickSelect.SmallestK(this.CombinedRaycastHitsBuffer, hitCount, i, RaycastUtils.RaycastHitComparer);
+            int idx = this.ColliderIndexMap[this.CombinedRaycastHitsBuffer[i]];
+            Collider origin = this.Colliders[idx];
+				if (this.grounded) {
+					var groundPoint = this.transform.InverseTransformPoint(closestRaycastHit.point);
+					if (groundPoint.y > Constants.ColliderSpacing && groundPoint.y <= Constants.MaxStepHeight + Constants.ColliderSpacing) {
+						var hitGameObject = closestRaycastHit.transform.gameObject;
+						this.FixRay.direction = hitMoveDirection.normalized;
+						this.FixRay.origin = closestRaycastHit.point - this.FixRay.direction * (Constants.ColliderSpacing + 0.1f);
+						if (!Physics.Raycast(this.FixRay, out this.RaycastHit, (Constants.ColliderSpacing + 0.11f), 1 << hitGameObject.layer, QueryTriggerInteraction.Ignore)) {
+							this.RaycastHit = closestRaycastHit;
+						}
+						var slope = Vector3.Angle(Vector3.up, this.RaycastHit.normal);
+						if (slope <= Constants.SlopeLimit + Constants.SlopeLimitSpacing) {
+							continue;
+						}
 
+						if (SingleCast(origin, hitMoveDirection,   (Constants.MaxStepHeight - Constants.ColliderSpacing)*Vector3.up)) {
+							if ((this.RaycastHit.distance - Constants.ColliderSpacing) < hitMoveDirection.magnitude) {
+								this.FixRay.direction = hitMoveDirection.normalized;
+								this.FixRay.origin = closestRaycastHit.point - this.FixRay.direction * (Constants.ColliderSpacing + 0.1f);
+								var normal = this.RaycastHit.normal;
+								if (Physics.Raycast(this.FixRay, out this.RaycastHit, (Constants.ColliderSpacing + 0.11f), 1 << hitGameObject.layer, QueryTriggerInteraction.Ignore))
+								{
+									normal = this.RaycastHit.normal;
+								}
+								//计算台阶的斜率
+								slope = Vector3.Angle(Vector3.up, normal);
+								if (slope <= Constants.SlopeLimit + Constants.SlopeLimitSpacing)
+								{
+									continue;
+								}
+							}
+						} else {
+							groundPoint.y = 0;
+							groundPoint = this.transform.TransformPoint(groundPoint);
+							var direction = groundPoint - this.transform.position;
+							if (OverlapCount(origin, (direction.normalized * (direction.magnitude + this.Radius * 0.5f)) + Vector3.up * (Constants.MaxStepHeight - Constants.ColliderSpacing)) == 0) {
+								continue;
+							}
+						}
+					}
+				}
+
+				//计算第一次和第二次的联合角度和距离
+				var moveDistanceContribution = moveDistance * Mathf.Cos(Vector3.Angle(horizontalDirection.normalized, hitMoveDirection.normalized) * Mathf.Deg2Rad);
+				var hitMoveDistance = Mathf.Min(closestRaycastHit.distance - moveDistanceContribution - hitMoveDirection.magnitude - Constants.ColliderSpacing, hitMoveDirection.magnitude);
+				if (hitMoveDistance < 0.001f || Vector3.Angle(Vector3.up, this.GroundRaycastHit.normal) > Constants.SlopeLimit + Constants.SlopeLimitSpacing) {
+					hitMoveDistance = 0;
+				}
+
+				moveDirection = (horizontalDirection.normalized * moveDistance) + hitMoveDirection.normalized * hitMoveDistance + Vector3.up * localDir.y;
+				break;
+			}
+			ResetCombinedRaycastHits();
+		}
     }
     /// <summary>
     /// 投射检测所有碰撞体
@@ -733,4 +795,21 @@ public class CharacterLocomotion : MonoBehaviour
                                                             out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing);
         }
     }
+	/// <summary>
+	/// 清空buffer，一般和NonAllocCast()成对使用
+	/// </summary>
+	private void ResetCombinedRaycastHits()
+	{
+		if (this.CombinedRaycastHitsBuffer == null) {
+			return;
+		}
+
+		for (int i = 0; i < this.CombinedRaycastHitsBuffer.Length; ++i) {
+			if (this.CombinedRaycastHitsBuffer[i].collider == null) {
+				break;
+			}
+
+			this.CombinedRaycastHitsBuffer[i] = Constants.BlankRaycastHit;
+		}
+	}
 }

@@ -22,6 +22,11 @@ public static class Constants
     public static float SlopeLimit = 40f;
     public static float SlopeLimitSpacing = 0.3f;
     public static int MaxOverlapIterations = 6;
+	/// <summary>
+	/// 空白raycast，用来清空raycast用
+	/// </summary>
+	/// <returns></returns>
+	public static RaycastHit BlankRaycastHit = new RaycastHit();
 
 }
 public static class TimeUtility
