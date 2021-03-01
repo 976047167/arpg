@@ -77,9 +77,12 @@ public class CharacterLocomotion : MonoBehaviour
     /// 是否在地面
     /// </summary>
     private bool grounded;
-
-    //减少gc用的变量
-    private RaycastHit RaycastHit;
+	/// <summary>
+	/// 射向地面的射线碰撞结果
+	/// </summary>
+	private RaycastHit GroundRaycastHit;
+	//减少gc用的变量
+	private RaycastHit RaycastHit;
     //用来手动计算击中法线的变量
     private Ray FixRay = new Ray();
     private float Radius;
@@ -420,12 +423,12 @@ public class CharacterLocomotion : MonoBehaviour
     {
         //水平偏移量
         Vector3 horizontalDirection = Vector3.ProjectOnPlane(moveDirection, Vector3.up);
-        //移动量不够，则清零世界方向的水平移动
-        Vector3 gDir = this.transform.InverseTransformDirection(moveDirection);
+        //移动量不够，则清零本地坐标方向的水平移动
+        Vector3 localDir = this.transform.InverseTransformDirection(moveDirection);
         if (horizontalDirection.sqrMagnitude < Constants.ColliderSpacingCubed)
         {
-            gDir.x = gDir.z = 0;
-            moveDirection = this.transform.TransformDirection(gDir);
+            localDir.x = localDir.z = 0;
+            moveDirection = this.transform.TransformDirection(localDir);
             return;
         }
         //检测是否有碰撞
@@ -452,7 +455,7 @@ public class CharacterLocomotion : MonoBehaviour
                 {
                     moveDistance = Mathf.Max(0, horizontalDirection.magnitude - offset.magnitude - Constants.ColliderSpacing);
                     moveDirection = Vector3.ProjectOnPlane(horizontalDirection.normalized * moveDistance, Vector3.up)
-                                    + Vector3.up * moveDirection.y;
+                                    + Vector3.up * localDir.y;
                 }
                 else
                 {
@@ -538,8 +541,25 @@ public class CharacterLocomotion : MonoBehaviour
             {
                 targetDirection = -targetDirection;
             }
-
-        }
+			//碰撞的情况下“动方向的距离“和“碰撞预留间隙“的和必然大于等于“投射距离“,即horizontalDirection.magnitudes+ Constants.ColliderSpacing >= closestRaycastHit.distance。
+			//但是如果物体够小，在胶囊体下方，投射距离就会可能大于运动距离,即closestRaycastHit.distance > horizontalDirection.magnitudes。
+			//这种情况也视为碰撞(移动后两物体实际距离在预留间隙中)，取较小值为移动距离
+			moveDistance = Mathf.Min(closestRaycastHit.distance - Constants.ColliderSpacing, horizontalDirection.magnitude);
+			if (moveDistance < 0.001f ||Vector3.Angle(Vector3.up, this.GroundRaycastHit.normal) > Constants.SlopeLimit + Constants.SlopeLimitSpacing){
+				moveDistance = 0;
+			}
+			//根据物理材质计算摩擦力
+			var dynamicFrictionValue = Mathf.Clamp01(1 - MathUtils.FrictionValue(starter.material, closestRaycastHit.collider.material, true));
+			//力量系数为1-cos值
+			hitStrength = 1 - Vector3.Dot(horizontalDirection.normalized, -hitNormal);
+			hitMoveDirection = targetDirection * (horizontalDirection.magnitude - moveDistance) * (hitStrength < 0.1f ? 0 : 1.5f) * dynamicFrictionValue;
+			if (hitMoveDirection.magnitude <= Constants.ColliderSpacing) {
+				hitMoveDirection = Vector3.zero;
+				hitStrength = 0;
+			}
+			moveDirection = (horizontalDirection.normalized * moveDistance) + hitMoveDirection + Vector3.up * localDir.y;
+			break;
+		}
 
     }
     /// <summary>
@@ -677,7 +697,7 @@ public class CharacterLocomotion : MonoBehaviour
     /// <param name="moveDirection"></param>
     /// <param name="point"></param>
     /// <param name="radius"></param>
-    /// <returns></returns>
+    /// <returns>是否推动</returns>
     protected bool PushRigidbody(Rigidbody targetRigidbody, Vector3 moveDirection, Vector3 point, float radius)
     {
         if (targetRigidbody.isKinematic)

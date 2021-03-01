@@ -13,6 +13,9 @@ public static class Constants
     public static float SmoothLookWeight = 0.5f;
     public static float SmoothExponent = 1.05f;
     public static float LookAccelerationThreshold = 0.4f;
+	/// <summary>
+	/// 预留间隙，如果两个碰撞体真的重叠，就没法用投射了
+	/// </summary>
     public static float ColliderSpacing = 0.01f;
     public static float ColliderSpacingCubed = ColliderSpacing * ColliderSpacing * ColliderSpacing * ColliderSpacing;
     public static float MaxStepHeight = 0.35f;
