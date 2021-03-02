@@ -81,7 +81,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// 射向地面的射线碰撞结果
 	/// </summary>
 	private RaycastHit GroundRaycastHit;
-	//减少gc用的变量
+	//减少gc用的变量，通常是Singlecast的结果值
 	private RaycastHit RaycastHit;
     //用来手动计算击中法线的变量
     private Ray FixRay = new Ray();
@@ -493,6 +493,7 @@ public class CharacterLocomotion : MonoBehaviour
                     if (slope <= Constants.SlopeLimit + Constants.SlopeLimitSpacing)
                     {
                         //斜率够小(斜坡的情况)，可以直接上
+						//遍历下一个hit，直到遇到一个重叠为止
                         continue;
                     }
 
@@ -514,6 +515,7 @@ public class CharacterLocomotion : MonoBehaviour
                             slope = Vector3.Angle(Vector3.up, normal);
                             if (slope <= Constants.SlopeLimit + Constants.SlopeLimitSpacing)
                             {
+								//遍历下一个hit，直到遇到一个重叠为止
                                 continue;
                             }
                         }
@@ -624,6 +626,41 @@ public class CharacterLocomotion : MonoBehaviour
 			ResetCombinedRaycastHits();
 		}
     }
+	
+	private void DeflectVerticalCollisions(ref Vector3 moveDirection)
+	{
+		//本地坐标
+		var localMoveDirection = this.transform.InverseTransformDirection(moveDirection);
+		if (localMoveDirection.y > 0) {
+			var horizontalDirection = Vector3.ProjectOnPlane(moveDirection , Vector3.up);
+			var hitCount = NonAllocCast(Vector3.up * (localMoveDirection.y + Constants.ColliderSpacing), horizontalDirection);
+			if (hitCount > 0) {
+				//垂直方向只有一个维度，所以取第一个即可
+				var closestRaycastHit = QuickSelect.SmallestK(this.CombinedRaycastHitsBuffer, hitCount, 0, RaycastUtils.RaycastHitComparer);
+				if (closestRaycastHit.distance == 0) {
+					//同水平方向一样，先进行反穿透处理
+					int idx = this.ColliderIndexMap[closestRaycastHit];
+					Collider origin = this.Colliders[idx];
+					//先尝试保持速度能否出来
+					var overlap = this.ComputePenetration(origin, closestRaycastHit.collider, horizontalDirection, true, out var offset);
+					if (overlap) {
+						//不行就直接弹出
+						overlap = this.ComputePenetration(origin, closestRaycastHit.collider, horizontalDirection, false, out offset);
+					}
+					if (!overlap) {
+						localMoveDirection.y = this.transform.InverseTransformDirection(offset).y;
+					} else {
+						localMoveDirection.y = 0;
+					}
+				} else {
+					//不穿透，就停在碰撞器前
+					localMoveDirection.y = Mathf.Max(0, closestRaycastHit.distance - Constants.ColliderSpacing);
+				}
+				//输出结果
+				moveDirection = this.transform.TransformDirection(localMoveDirection);
+			}
+		}
+	}
 	/// <summary>
     /// 投射检测所有碰撞体
     /// 用来做碰撞预测
