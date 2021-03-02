@@ -432,7 +432,7 @@ public class CharacterLocomotion : MonoBehaviour
             return;
         }
         //检测是否有碰撞
-        var hitCount = NonAllocCast(horizontalDirection);
+        var hitCount = NonAllocCast(horizontalDirection,Vector3.zero);
         if (hitCount == 0)
         {
             return;
@@ -565,7 +565,7 @@ public class CharacterLocomotion : MonoBehaviour
 		//在墙角可能被挤出去
 		//做第二次检测，确保被第一次弹出的方向的位置是可以使用的
 		if (hitStrength > 0.0001f) {
-			hitCount = NonAllocCast(hitMoveDirection);
+			hitCount = NonAllocCast(hitMoveDirection,Vector3.zero);
 			for (int i = 0; i < hitCount; ++i) {
 				var closestRaycastHit = QuickSelect.SmallestK(this.CombinedRaycastHitsBuffer, hitCount, i, RaycastUtils.RaycastHitComparer);
             int idx = this.ColliderIndexMap[this.CombinedRaycastHitsBuffer[i]];
@@ -624,13 +624,15 @@ public class CharacterLocomotion : MonoBehaviour
 			ResetCombinedRaycastHits();
 		}
     }
-    /// <summary>
+	/// <summary>
     /// 投射检测所有碰撞体
     /// 用来做碰撞预测
-    /// </summary>
+	/// </summary>
+	/// <param name="direction"></param>
     /// <param name="direction">投射方向的向量</param>
-    /// <returns></returns>
-    private int NonAllocCast(Vector3 direction)
+	/// <param name="offset">位置上的偏移量</param>
+	/// <returns></returns>
+    private int NonAllocCast(Vector3 direction,Vector3 offset)
     {
         this.ColliderIndexMap.Clear();
         int hitCount = 0;
@@ -641,7 +643,7 @@ public class CharacterLocomotion : MonoBehaviour
             {
                 Vector3 firstEndCap, secondEndCap;
                 CapsuleCollider collider = this.Colliders[i] as CapsuleCollider;
-                MathUtils.CapsuleColliderEndCaps(collider, collider.transform.position, collider.transform.rotation, out firstEndCap, out secondEndCap);
+                MathUtils.CapsuleColliderEndCaps(collider, collider.transform.position + offset, collider.transform.rotation, out firstEndCap, out secondEndCap);
                 //半径
                 float radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
                 hitNums = Physics.CapsuleCastNonAlloc(firstEndCap, secondEndCap, radius, direction.normalized, RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing);
@@ -650,7 +652,7 @@ public class CharacterLocomotion : MonoBehaviour
             {//只剩下SphereCollider
                 SphereCollider collider = this.Colliders[i] as SphereCollider;
                 var radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
-                hitNums = Physics.SphereCastNonAlloc(collider.transform.TransformPoint(collider.center), radius, direction.normalized, RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing);
+                hitNums = Physics.SphereCastNonAlloc(collider.transform.TransformPoint(collider.center)+offset, radius, direction.normalized, RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing);
             }
             if (hitNums > 0)
             {
