@@ -28,6 +28,10 @@ public static class Constants
 	/// <returns></returns>
 	public static RaycastHit BlankRaycastHit = new RaycastHit();
 
+	public static float MotorSlopeForceDown = 1.25f;
+	public static float MotorSlopeForceUp = 1f;
+	public static float GravityMagnitude = 3.92f;
+
 }
 public static class TimeUtility
 {
@@ -40,6 +44,8 @@ public static class TimeUtility
         get { return Time.deltaTime * TargetFramerate; }
     }
     private const int TargetFramerate = 60;
+
+
 }
 public static class AnimatorHash
 {
@@ -51,6 +57,7 @@ public static class AnimatorHash
     public static int ForwardMovementHash = Animator.StringToHash("ForwardMovement");
     public static int MovingHash = Animator.StringToHash("Moving");
     public static int YawHash = Animator.StringToHash("Yaw");
+    public static int OnCharacterGroundedHash = Animator.StringToHash("OnCharacterGrounded");
 
 }
 public static class GameEvent
