@@ -115,6 +115,7 @@ public class CharacterLocomotion : MonoBehaviour
 
 		//遍历所有碰撞体
 		var colliders = this.GetComponentsInChildren<Collider>();
+		this.Colliders = new List<Collider>();
 		for (int i = 0; i < colliders.Length; ++i)
 		{
 			//触发器不要
