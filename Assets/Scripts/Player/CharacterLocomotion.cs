@@ -386,6 +386,7 @@ public class CharacterLocomotion : MonoBehaviour
 	}
 	private void UpdatePosAndRota()
 	{
+		Physics.SyncTransforms();
 		UpdateRotation();
 		UpdatePosition();
 	}
@@ -908,20 +909,20 @@ public class CharacterLocomotion : MonoBehaviour
 				MathUtils.CapsuleColliderEndCaps(collider, collider.transform.position + offset, collider.transform.rotation, out firstEndCap, out secondEndCap);
 				//半径
 				float radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
-				hitNums = Physics.CapsuleCastNonAlloc(firstEndCap, secondEndCap, radius, direction.normalized, RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing);
+				hitNums = Physics.CapsuleCastNonAlloc(firstEndCap, secondEndCap, radius, direction.normalized,this.RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
 			}
 			else
 			{//只剩下SphereCollider
 				SphereCollider collider = this.Colliders[i] as SphereCollider;
 				var radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
-				hitNums = Physics.SphereCastNonAlloc(collider.transform.TransformPoint(collider.center) + offset, radius, direction.normalized, RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing);
+				hitNums = Physics.SphereCastNonAlloc(collider.transform.TransformPoint(collider.center) + offset, radius, direction.normalized, this.RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
 			}
 			if (hitNums > 0)
 			{
 				int validHitCount = 0;
 				for (int j = 0; j < hitNums; ++j)
 				{
-					if (this.ColliderIndexMap.ContainsKey(RaycastHitsBuffer[j]))
+					if (this.ColliderIndexMap.ContainsKey(this.RaycastHitsBuffer[j]))
 					{
 						continue;
 					}
@@ -932,8 +933,8 @@ public class CharacterLocomotion : MonoBehaviour
 						continue;
 					}
 
-					this.ColliderIndexMap.Add(RaycastHitsBuffer[j], i);
-					this.CombinedRaycastHitsBuffer[hitCount + j] = RaycastHitsBuffer[j];
+					this.ColliderIndexMap.Add(this.RaycastHitsBuffer[j], i);
+					this.CombinedRaycastHitsBuffer[hitCount + j] =this.RaycastHitsBuffer[j];
 					validHitCount += 1;
 				}
 				hitCount += validHitCount;
@@ -1005,15 +1006,13 @@ public class CharacterLocomotion : MonoBehaviour
 			Vector3 startEndCap, endEndCap;
 			var capsuleCollider = collider as CapsuleCollider;
 			MathUtils.CapsuleColliderEndCaps(capsuleCollider, collider.transform.position + offset, collider.transform.rotation, out startEndCap, out endEndCap);
-			return Physics.OverlapCapsuleNonAlloc(startEndCap, endEndCap, capsuleCollider.radius * MathUtils.ColliderRadiusMultiplier(capsuleCollider) - Constants.ColliderSpacing,
-													this.OverlapColliderBuffer);
+			return Physics.OverlapCapsuleNonAlloc(startEndCap, endEndCap, capsuleCollider.radius * MathUtils.ColliderRadiusMultiplier(capsuleCollider) - Constants.ColliderSpacing, this.OverlapColliderBuffer,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
 		}
 		else
 		{ // SphereCollider.
 			var sphereCollider = collider as SphereCollider;
-			return Physics.OverlapSphereNonAlloc(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset,
-													sphereCollider.radius * MathUtils.ColliderRadiusMultiplier(sphereCollider) - Constants.ColliderSpacing,
-													this.OverlapColliderBuffer);
+			return Physics.OverlapSphereNonAlloc(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, sphereCollider.radius * MathUtils.ColliderRadiusMultiplier(sphereCollider) - Constants.ColliderSpacing,
+													this.OverlapColliderBuffer,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
 		}
 	}
 	/// <summary>
@@ -1026,7 +1025,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <returns>是否推动</returns>
 	private bool PushRigidbody(Rigidbody targetRigidbody, Vector3 moveDirection, Vector3 point, float radius)
 	{
-		if (targetRigidbody.isKinematic)
+		if (targetRigidbody.isKinematic|| !MathUtils.InLayerMask(targetRigidbody.gameObject.layer, LayerMask.SolidObjectLayers))
 		{
 			return false;
 		}
@@ -1049,14 +1048,13 @@ public class CharacterLocomotion : MonoBehaviour
 			var capsuleCollider = collider as CapsuleCollider;
 			MathUtils.CapsuleColliderEndCaps(capsuleCollider, capsuleCollider.transform.position + offset, capsuleCollider.transform.rotation, out startEndCap, out endEndCap);
 			var radius = capsuleCollider.radius * MathUtils.ColliderRadiusMultiplier(capsuleCollider) - Constants.ColliderSpacing;
-			return Physics.CapsuleCast(startEndCap, endEndCap, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing);
+			return Physics.CapsuleCast(startEndCap, endEndCap, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
 		}
 		else
 		{ // SphereCollider.
 			var sphereCollider = collider as SphereCollider;
 			var radius = sphereCollider.radius * MathUtils.ColliderRadiusMultiplier(sphereCollider) - Constants.ColliderSpacing;
-			return Physics.SphereCast(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, radius, direction.normalized,
-															out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing);
+			return Physics.SphereCast(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
 		}
 	}
 	/// <summary>

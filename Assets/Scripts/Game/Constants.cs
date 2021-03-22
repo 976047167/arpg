@@ -57,11 +57,15 @@ public static class AnimatorHash
     public static int ForwardMovementHash = Animator.StringToHash("ForwardMovement");
     public static int MovingHash = Animator.StringToHash("Moving");
     public static int YawHash = Animator.StringToHash("Yaw");
-    public static int OnCharacterGroundedHash = Animator.StringToHash("OnCharacterGrounded");
 
 }
 public static class GameEvent
 {
     public static int OnMoving = "onMoving".GetHashCode();
     public static int AnimationEvent = "AnimationEvent".GetHashCode();
+    public static int OnCharacterGroundedHash = "OnCharacterGrounded".GetHashCode();
+}
+public static class LayerMask
+{
+	public static UnityEngine.LayerMask SolidObjectLayers = ((1 << LayerManager.Default) | (1 << LayerManager.TransparentFX) | (1 << LayerManager.Enemy) | (1 << LayerManager.MovingPlatform) | (1 << LayerManager.Character));
 }
