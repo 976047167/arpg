@@ -55,6 +55,14 @@ public class CharacterLocomotion : MonoBehaviour
 	/// </summary>
 	private List<Collider> Colliders;
 	/// <summary>
+	/// 在每次碰撞检测前，保存layer的缓冲
+	/// </summary>
+	private Dictionary<Collider, UnityEngine.LayerMask>  CollidersLayerCache;
+	/// <summary>
+	/// 碰撞检测的标志位，防止多次保存，导致缓冲层级被覆盖掉
+	/// </summary>
+	private bool  CollisionLayerEnabled =true;
+	/// <summary>
 	/// 碰撞体和射线相交点的映射
 	/// </summary>
 	public Dictionary<RaycastHit, int> ColliderIndexMap;
@@ -147,6 +155,7 @@ public class CharacterLocomotion : MonoBehaviour
 			this.Colliders.Add(colliders[i]);
 		}
 		this.ColliderIndexMap = new Dictionary<RaycastHit, int>(RaycastUtils.RaycastHitEqualityComparer);
+		this.CollidersLayerCache = new Dictionary<Collider, UnityEngine.LayerMask>();
 		this.RaycastHitsBuffer = new RaycastHit[100];
 		this.CombinedRaycastHitsBuffer = new RaycastHit[100 * this.Colliders.Count];
 		this.OverlapColliderBuffer = new Collider[100];
@@ -387,8 +396,10 @@ public class CharacterLocomotion : MonoBehaviour
 	private void UpdatePosAndRota()
 	{
 		Physics.SyncTransforms();
+		this.EnableColliderCollisionLayer(false);
 		UpdateRotation();
 		UpdatePosition();
+		this.EnableColliderCollisionLayer(true);
 	}
 	/// <summary>
 	/// 计算需要旋转的角度
@@ -1075,6 +1086,37 @@ public class CharacterLocomotion : MonoBehaviour
 			}
 
 			this.CombinedRaycastHitsBuffer[i] = Constants.BlankRaycastHit;
+		}
+	}
+
+	/// <summary>
+	/// 调整自己碰撞器的层级，使其规避检测
+	/// </summary>
+	/// <param name="enable"></param>
+	public void EnableColliderCollisionLayer(bool enable)
+	{
+		if (this.CollisionLayerEnabled == enable) {
+			return;
+		}
+		this.CollisionLayerEnabled = enable;
+		if (enable) {
+			//如果开启，则将缓冲中的层级写回。
+			for (int i = 0; i < this.Colliders.Count; i++)
+			{
+				var collider = this.Colliders[i];
+				UnityEngine.LayerMask layer;
+				if( this.CollidersLayerCache.TryGetValue(collider, out layer)){
+					collider.gameObject.layer = layer;
+				}
+			}
+		} else {
+			//否则备份层级
+			for (int i = 0; i < this.Colliders.Count; i++)
+			{
+				var collider = this.Colliders[i];
+				this.CollidersLayerCache[collider] = collider.gameObject.layer;
+				collider.gameObject.layer =LayerManager.IgnoreRaycast;
+			}
 		}
 	}
 }
