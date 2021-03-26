@@ -17,9 +17,10 @@ public class CharacterLocomotion : MonoBehaviour
 	/// 时间缩放，控制单位动画速度
 	/// </summary>
 	public float TimeScale = 1;
-	private PlayerController controller;
+	private PlayerController Controller;
 	private CharacterAnimator animator;
-	private Vector2 InputVector = Vector2.zero;
+	public Vector2 InputVector{ get; private set;} = Vector2.zero;
+	public Vector2 RawInputVector{ get; private set;} = Vector2.zero;
 	private Vector3 InputRotation = Vector3.zero;
 	private bool Moving = false;
 	private Transform cameraTrans;
@@ -84,7 +85,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <summary>
 	/// 是否在地面
 	/// </summary>
-	private bool grounded;
+	private bool Grounded;
 	/// <summary>
 	/// 射向地面的射线碰撞结果
 	/// </summary>
@@ -111,7 +112,7 @@ public class CharacterLocomotion : MonoBehaviour
 	private float GravityAmount;
 	private void Awake()
 	{
-		this.controller = this.GetComponent<PlayerController>();
+		this.Controller = this.GetComponent<PlayerController>();
 		this.cameraTrans = Camera.main.transform;
 		this.animator = this.GetComponent<CharacterAnimator>();
 
@@ -173,8 +174,9 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <param name="input">输入脚本</param>
 	public void PlayerUpdate(PlayerInput input)
 	{
-		this.SetInputVector(input.getDirection());
-		this.SetInputRotation(input.getDirection());
+		this.RawInputVector = input.getDirection();
+		this.SetInputVector(this.RawInputVector);
+		this.SetInputRotation(this.RawInputVector);
 		this.UpdateInputActions(input);
 	}
 
@@ -185,13 +187,10 @@ public class CharacterLocomotion : MonoBehaviour
 	public void SetInputVector(Vector2 direction)
 	{
 		var clampValue = Mathf.Max(Mathf.Abs(direction.x), Mathf.Max(Mathf.Abs(direction.y), 1));
-		this.InputVector.y = Mathf.Clamp(direction.magnitude, -clampValue, clampValue);
-		this.InputVector.x = 0;
+		float y = Mathf.Clamp(direction.magnitude, -clampValue, clampValue);
+		this.InputVector.Set(0,y);
 	}
-	public Vector2 GetInputVector()
-	{
-		return this.InputVector;
-	}
+
 
 	/// <summary>
 	/// 由AI或者玩家转传来的角色转动方向的向量；
@@ -202,6 +201,7 @@ public class CharacterLocomotion : MonoBehaviour
 		var yaw = 0f;
 		if (direction.x != 0 || direction.y != 0)
 		{
+			// todo: 此处逻辑不完善，缺少npc转向逻辑，等做NPC逻辑时修复
 			var lookRotation = Quaternion.LookRotation(Camera.main.transform.rotation *
 				new Vector3(direction.x, 0, direction.y).normalized, this.transform.up);
 			yaw = MathUtils.ClampInnerAngle(MathUtils.InverseTransformQuaternion(this.transform.rotation, lookRotation).eulerAngles.y);
@@ -303,6 +303,11 @@ public class CharacterLocomotion : MonoBehaviour
 			else if (!action.Active && action.StartType == START_TYPE.Automatic)
 			{
 				this.tryActiveAction(action);
+			}
+			if(action.Active){
+				action.Update();
+			}else{
+				action.DeactiveUpdate();
 			}
 		}
 
@@ -510,7 +515,7 @@ public class CharacterLocomotion : MonoBehaviour
 			}
 			//如果没有推动，说明可能是斜坡或者阶梯
 			//如果是斜坡或者阶梯，不必做物理计算
-			if (canStep && this.grounded)
+			if (canStep && this.Grounded)
 			{
 				// 计算移动点的斜坡高度是否可以上坡
 				var groundPoint = this.transform.InverseTransformPoint(closestRaycastHit.point);
@@ -609,7 +614,7 @@ public class CharacterLocomotion : MonoBehaviour
 				var closestRaycastHit = QuickSelect.SmallestK(this.CombinedRaycastHitsBuffer, hitCount, i, RaycastUtils.RaycastHitComparer);
 				int idx = this.ColliderIndexMap[this.CombinedRaycastHitsBuffer[i]];
 				Collider origin = this.Colliders[idx];
-				if (this.grounded)
+				if (this.Grounded)
 				{
 					var groundPoint = this.transform.InverseTransformPoint(closestRaycastHit.point);
 					if (groundPoint.y > Constants.ColliderSpacing && groundPoint.y <= Constants.MaxStepHeight + Constants.ColliderSpacing)
@@ -732,7 +737,7 @@ public class CharacterLocomotion : MonoBehaviour
 				verticalOffset = 0;
 			}
 			//在地面或者落地、起跳的瞬间
-			if ((this.grounded || grounded) &&
+			if ((this.Grounded || grounded) &&
 			localMoveDirection.y < this.SkinWidth &&
 			verticalOffset > -Constants.ColliderSpacing)
 			{
@@ -767,8 +772,11 @@ public class CharacterLocomotion : MonoBehaviour
 			//落地后重力参数归0
 			this.GravityAmount = 0;
 		}
-
-		this.grounded = grounded;
+		this.SetGround(grounded);
+	}
+	private void SetGround(bool state){
+		this.Grounded = state;
+		Notification.Emit<CharacterLocomotion, bool>(GameEvent.OnCharacterGroundedHash, this, state);
 	}
 
 	/// <summary>
@@ -858,7 +866,7 @@ public class CharacterLocomotion : MonoBehaviour
 		this.ResetCombinedRaycastHits();
 
 		//更新接地体
-		if (grounded != this.grounded || this.GroundRaycastHit.transform != this.GroundHitTransform)
+		if (grounded != this.Grounded || this.GroundRaycastHit.transform != this.GroundHitTransform)
 		{
 			this.GroundHitTransform = grounded ? this.GroundRaycastHit.transform : null;
 		}
@@ -872,7 +880,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// </summary>
 	private void UpdateSlopeFactor()
 	{
-		if (!this.grounded)
+		if (!this.Grounded)
 		{
 			this.SlopeFactor = 1;
 			return;

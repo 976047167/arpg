@@ -46,8 +46,8 @@ namespace GameAction
 			}
 
 			if (this.moving ) return false;
-			// The ability can't start if the character is stopped.
-			if (this.ownerLocomotion.GetInputVector().magnitude == 0)
+			//无移动，不启动
+			if (this.ownerLocomotion.InputVector.magnitude == 0)
 			{
 				return false;
 			}
@@ -62,8 +62,7 @@ namespace GameAction
 				return false;
 			}
 			if(animationFinished)return true;
-			// The ability can't start if the character is stopped.
-			if (this.ownerLocomotion.GetInputVector().magnitude > 0)
+			if (this.ownerLocomotion.InputVector.magnitude > 0)
 			{
 				return false;
 			}
@@ -72,8 +71,7 @@ namespace GameAction
 
 		public override void Activavte()
 		{
-			// The start index is based on the input value.
-			Vector2 inputValue = this.ownerLocomotion.GetInputVector();
+			Vector2 inputValue = this.ownerLocomotion.InputVector;
 			float speed = Constants.SpeedAcceleration;
 			int moveArg = (int)StartIndex.None;
 			if (inputValue.x > speed && inputValue.y > speed)

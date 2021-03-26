@@ -21,7 +21,7 @@ namespace GameAction
 			Type[] types = asm.GetTypes();
 			foreach (var t in types)
 			{
-				if (t.BaseType != typeof(GameActionBase)) continue;
+				if (t.BaseType!= typeof(GameActionBase)) continue;
 				Debug.WriteLine(t.Name);
 				object[] attrbutes = t.GetCustomAttributes(typeof(GameActionType), false);
 				foreach (var atr in attrbutes)

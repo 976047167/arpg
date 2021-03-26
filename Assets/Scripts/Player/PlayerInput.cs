@@ -5,21 +5,26 @@ using UnityEngine;
 public class PlayerInput : MonoBehaviour
 {
 
-    private CharacterLocomotion locomotion;
+    private CharacterLocomotion Locomotion;
     private Vector2 direction = Vector2.zero;
-    private Vector2[] m_SmoothLookBuffer;
-    private int m_SmoothLookBufferIndex = 0;
-    private int m_SmoothLookBufferCount = 0;
+    private Vector2[] SmoothLookBuffer;
+    private int SmoothLookBufferIndex = 0;
+    private int SmoothLookBufferCount = 0;
     private Vector2 CurrentLookVector;
-    private void Awake()
+	private void Awake()
     {
-        this.m_SmoothLookBuffer = new Vector2[Constants.SmoothLookSteps];
-        this.locomotion = this.GetComponent<CharacterLocomotion>();
+        this.SmoothLookBuffer = new Vector2[Constants.SmoothLookSteps];
+        this.Locomotion = this.GetComponent<CharacterLocomotion>();
     }
     public Vector2 getDirection()
     {
         return this.direction;
     }
+
+	/// <summary>
+	/// 面朝方向
+	/// </summary>
+	/// <returns></returns>
 	public Vector2 getLookVector(){
 		return this.CurrentLookVector;
 	}
@@ -29,6 +34,7 @@ public class PlayerInput : MonoBehaviour
         float x = Input.GetAxisRaw("Horizontal");
         float y = Input.GetAxisRaw("Vertical");
         this.direction.Set(x, y);
+
     }
     private void FixedUpdate()
     {
@@ -40,36 +46,34 @@ public class PlayerInput : MonoBehaviour
         this.direction.x = Input.GetAxisRaw("Horizontal");
         this.direction.y = Input.GetAxisRaw("Vertical");
 
-        //将现在的面朝方向存入缓存中
-        this.m_SmoothLookBuffer[m_SmoothLookBufferIndex].x = this.direction.x;
-        this.m_SmoothLookBuffer[m_SmoothLookBufferIndex].y = this.direction.y;
-        if (m_SmoothLookBufferCount < m_SmoothLookBufferIndex + 1)
+        //将现在的面朝方向的目标存入缓存中
+        this.SmoothLookBuffer[SmoothLookBufferIndex].x = this.direction.x;
+        this.SmoothLookBuffer[SmoothLookBufferIndex].y = this.direction.y;
+        if (SmoothLookBufferCount < SmoothLookBufferIndex + 1)
         {
-            m_SmoothLookBufferCount = m_SmoothLookBufferIndex + 1;
+            SmoothLookBufferCount = SmoothLookBufferIndex + 1;
         }
 
-        // Calculate the input smoothing value. The more recent the input value occurred the higher the influence it has on the final smoothing value.
+        // 通过计算连续输入的权重，计算朝向
         var weight = 1f;
         var average = Vector2.zero;
         var averageTotal = 0f;
-        var deltaTime = this.locomotion.TimeScale * TimeUtility.FramerateDeltaTime;
-        for (int i = 0; i < m_SmoothLookBufferCount; ++i)
+        var deltaTime = this.Locomotion.TimeScale * TimeUtility.FramerateDeltaTime;
+        for (int i = 0; i < SmoothLookBufferCount; ++i)
         {
-            var index = m_SmoothLookBufferIndex - i;
-            if (index < 0) { index = m_SmoothLookBufferCount + m_SmoothLookBufferIndex - i; }
-            average += m_SmoothLookBuffer[index] * weight;
+            var index = SmoothLookBufferIndex - i;
+            if (index < 0) { index = SmoothLookBufferCount + SmoothLookBufferIndex - i; }
+            average += SmoothLookBuffer[index] * weight;
             averageTotal += weight;
-            // The deltaTime will be 0 if Unity just started to play after stepping through the editor.
+            //unity调试断点暂停，之后点运行会导致deltaTime为0
             if (deltaTime > 0)
             {
                 weight *= (Constants.SmoothLookWeight / deltaTime);
             }
         }
-        m_SmoothLookBufferIndex = (m_SmoothLookBufferIndex + 1) % m_SmoothLookBuffer.Length;
-        // Store the averaged input value.
-        averageTotal = Mathf.Max(1, averageTotal);
+        SmoothLookBufferIndex = (SmoothLookBufferIndex + 1) % SmoothLookBuffer.Length;
+        averageTotal = Mathf.Max(1, averageTotal);//最小为1
 		this.CurrentLookVector = average / averageTotal;
-        // Apply any look acceleration. The delta time will be zero on the very first frame.
         var lookAcceleration = 0f;
         if (Constants.LookAccelerationThreshold > 0 && deltaTime != 0)
         {
@@ -85,7 +89,6 @@ public class PlayerInput : MonoBehaviour
         // 计算最终值
         this.CurrentLookVector.x *= ((Constants.LookSensitivity.x * Constants.LookSensitivityMultiplier) + lookAcceleration) * TimeUtility.FramerateDeltaTime;
         this.CurrentLookVector.y *= ((Constants.LookSensitivity.y * Constants.LookSensitivityMultiplier) + lookAcceleration) * TimeUtility.FramerateDeltaTime;
-
 		//增强对比
         this.CurrentLookVector.x = Mathf.Sign(this.CurrentLookVector.x) * Mathf.Pow(Mathf.Abs(this.CurrentLookVector.x), Constants.SmoothExponent);
         this.CurrentLookVector.y = Mathf.Sign(this.CurrentLookVector.y) * Mathf.Pow(Mathf.Abs(this.CurrentLookVector.y), Constants.SmoothExponent);

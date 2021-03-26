@@ -84,10 +84,8 @@ namespace GameAction
 			this.Active = false;
 		}
 
-		public virtual void Release()
-		{
-
-		}
-
+		public virtual void Release() { }
+		public virtual void Update(){ }
+		public virtual void DeactiveUpdate(){ }
 	}
 }

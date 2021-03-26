@@ -5,6 +5,6 @@ namespace GameAction
 	{
 		NULL = 0,
 		StartMove = 1,
-		Moving = 2,
+		StopMove = 2,
 	}
 }

@@ -11,6 +11,9 @@ public static class Constants
     public static Vector2 LookSensitivity = new Vector2(2f, 2f);
     public static float LookSensitivityMultiplier = 1;
     public static float SmoothLookWeight = 0.5f;
+	/// <summary>
+	/// 旋转角度的增强pow值
+	/// </summary>
     public static float SmoothExponent = 1.05f;
     public static float LookAccelerationThreshold = 0.4f;
 	/// <summary>
@@ -25,7 +28,6 @@ public static class Constants
 	/// <summary>
 	/// 空白raycast，用来清空raycast用
 	/// </summary>
-	/// <returns></returns>
 	public static RaycastHit BlankRaycastHit = new RaycastHit();
 
 	public static float MotorSlopeForceDown = 1.25f;
