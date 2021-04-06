@@ -1,12 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
-using UnityEngine;
 public static class Notification
 {
-    private static Dictionary<Type, KeyValuePair<int, HashSet<int>>> BindMap = new Dictionary<Type, KeyValuePair<int, HashSet<int>>>();
-    private static List<object> Callbacks = new List<object>();
-
+    private static Dictionary<Type, Dictionary<int, HashSet<object>>> BindMap = new Dictionary<Type, Dictionary<int, HashSet<object>>>();
     public static void CreateBinding(int EventHash, Action callback)
     {
         Type t = typeof(Action);
@@ -15,17 +12,16 @@ public static class Notification
     public static void Emit(int EventHash)
     {
         var bindings = GetBinding<Action>(EventHash);
-        for (int i = 0; i < bindings.Length; i++)
-        {
-            bindings[i]();
-        }
+		if(bindings == null) return; 
+		foreach (var callback in bindings)
+		{
+			callback();
+		}
     }
     public static void RemoveBinding(int hash, Action callback)
     {
-        int idx = Callbacks.IndexOf(callback);
-        if (idx == -1) return;
         Type t = typeof(Action);
-        RemoveBinding(t, idx);
+        RemoveBinding(t,hash,callback);
     }
 
 
@@ -37,17 +33,16 @@ public static class Notification
     public static void Emit<T>(int EventHash, T arg)
     {
         var bindings = GetBinding<Action<T>>(EventHash);
-        for (int i = 0; i < bindings.Length; i++)
-        {
-            bindings[i](arg);
-        }
+		if(bindings == null) return; 
+		foreach (var callback in bindings)
+		{
+			callback(arg);
+		}
     }
     public static void RemoveBinding<T>(int hash, Action<T> callback)
     {
-        int idx = Callbacks.IndexOf(callback);
-        if (idx == -1) return;
         Type t = typeof(Action<T>);
-        RemoveBinding(t, idx);
+        RemoveBinding(t,hash,callback);
     }
 
     public static void CreateBinding<T1, T2>(int EventHash, Action<T1, T2> callback)
@@ -58,67 +53,67 @@ public static class Notification
     public static void Emit<T1, T2>(int EventHash, T1 arg1, T2 arg2)
     {
         var bindings = GetBinding<Action<T1, T2>>(EventHash);
-        for (int i = 0; i < bindings.Length; i++)
-        {
-            bindings[i](arg1, arg2);
-        }
+		if(bindings == null) return; 
+		foreach (var callback in bindings)
+		{
+			callback(arg1,arg2);
+		}
     }
     public static void RemoveBinding<T1, T2>(int hash, Action<T1, T2> callback)
     {
-        int idx = Callbacks.IndexOf(callback);
-        if (idx == -1) return;
         Type t = typeof(Action<T1, T2>);
-        RemoveBinding(t, idx);
+        RemoveBinding(t,hash,callback);
     }
 
 
 
 
-    private static void RemoveBinding(Type t, int idx)
+    private static void RemoveBinding(Type t,int hash,object callback)
     {
-        KeyValuePair<int, HashSet<int>> bindings;
+        Dictionary<int, HashSet<object>> bindings;
         bool get = BindMap.TryGetValue(t, out bindings);
         if (!get) return;
-        bindings.Value.Remove(idx);
+        HashSet<object> backs;
+        get = bindings.TryGetValue(hash, out backs);
+        if (!get) return;
+        backs.Remove(callback);
+		if(backs.Count == 0){
+			bindings.Remove(hash);
+		}
+		//bindMap就不用移除了
     }
     private static void AddBinding(Type type, int hash, object callback)
     {
-        //计算回调在列表中index;
-        int idx = Callbacks.IndexOf(callback);
-        if (idx == -1)
-        {
-            Callbacks.Add(callback);
-            idx = Callbacks.Count - 1;
-        }
-
-        KeyValuePair<int, HashSet<int>> bindings;
+        Dictionary<int, HashSet<object>> bindings;
         if (BindMap.ContainsKey(type))
         {
             bindings = BindMap[type];
         }
         else
         {
-            bindings = new KeyValuePair<int, HashSet<int>>(hash, new HashSet<int>());
-            BindMap.Add(type, bindings);
+            bindings = new Dictionary<int, HashSet<object>>();
+			BindMap.Add(type, bindings);
         }
-        //将回调索引写入hashset
-        bindings.Value.Add(idx);
+		HashSet<object> cbSet;
+		if(bindings.ContainsKey(hash)){
+			cbSet = bindings[hash];
+		}else{
+			cbSet = new HashSet<object>();
+			bindings.Add(hash, cbSet);
+		}
+		cbSet.Add(callback);
     }
-    private static T[] GetBinding<T>(int hash)
+    private static HashSet<T> GetBinding<T>(int hash)
     {
         Type t = typeof(T);
-        KeyValuePair<int, HashSet<int>> bindings;
+        Dictionary<int, HashSet<object>> bindings;
         bool exit = BindMap.TryGetValue(t, out bindings);
-        if (!exit) bindings = new KeyValuePair<int, HashSet<int>>();
-        if (bindings.Value == null) return new T[0];
-        var set = bindings.Value;
-        var ret = new T[set.Count];
-        int i = 0;
-        foreach (int idx in set)
-        {
-            ret[i++] = (T)Callbacks[idx];
-        }
-        return ret;
+        if (!exit) return null;
+		HashSet<object> ret;
+		exit = bindings.TryGetValue(hash, out ret);
+        if (!exit) return null;
+		return (HashSet<T>)(object)ret;
+
     }
 
 }

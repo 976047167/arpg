@@ -19,8 +19,8 @@ public class CharacterLocomotion : MonoBehaviour
 	public float TimeScale = 1;
 	private PlayerController Controller;
 	private CharacterAnimator animator;
-	public Vector2 InputVector{ get; private set;} = Vector2.zero;
-	public Vector2 RawInputVector{ get; private set;} = Vector2.zero;
+	public Vector2 InputVector { get; private set; } = Vector2.zero;
+	public Vector2 RawInputVector { get; private set; } = Vector2.zero;
 	private Vector3 InputRotation = Vector3.zero;
 	private bool Moving = false;
 	private Transform cameraTrans;
@@ -58,11 +58,11 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <summary>
 	/// 在每次碰撞检测前，保存layer的缓冲
 	/// </summary>
-	private Dictionary<Collider, UnityEngine.LayerMask>  CollidersLayerCache;
+	private Dictionary<Collider, UnityEngine.LayerMask> CollidersLayerCache;
 	/// <summary>
 	/// 碰撞检测的标志位，防止多次保存，导致缓冲层级被覆盖掉
 	/// </summary>
-	private bool  CollisionLayerEnabled =true;
+	private bool CollisionLayerEnabled = true;
 	/// <summary>
 	/// 碰撞体和射线相交点的映射
 	/// </summary>
@@ -188,7 +188,7 @@ public class CharacterLocomotion : MonoBehaviour
 	{
 		var clampValue = Mathf.Max(Mathf.Abs(direction.x), Mathf.Max(Mathf.Abs(direction.y), 1));
 		float y = Mathf.Clamp(direction.magnitude, -clampValue, clampValue);
-		this.InputVector.Set(0,y);
+		this.InputVector.Set(0, y);
 	}
 
 
@@ -304,9 +304,12 @@ public class CharacterLocomotion : MonoBehaviour
 			{
 				this.tryActiveAction(action);
 			}
-			if(action.Active){
+			if (action.Active)
+			{
 				action.Update();
-			}else{
+			}
+			else
+			{
 				action.DeactiveUpdate();
 			}
 		}
@@ -757,12 +760,12 @@ public class CharacterLocomotion : MonoBehaviour
 		moveDirection = this.transform.TransformDirection(localMoveDirection);
 
 		if (accumulateGravity)
-		{ 
+		{
 			//如果角色再空中，增大重力参数，使其在下一帧下落更快
 			this.GravityAmount += (Constants.GravityMagnitude * -0.001f) / Time.timeScale;
 		}
 		else if (grounded)
-		{ 
+		{
 			//向下施加人物的重力
 			if (this.GroundRaycastHit.rigidbody != null)
 			{
@@ -774,7 +777,8 @@ public class CharacterLocomotion : MonoBehaviour
 		}
 		this.SetGround(grounded);
 	}
-	private void SetGround(bool state){
+	private void SetGround(bool state)
+	{
 		this.Grounded = state;
 		Notification.Emit<CharacterLocomotion, bool>(GameEvent.OnCharacterGroundedHash, this, state);
 	}
@@ -794,75 +798,79 @@ public class CharacterLocomotion : MonoBehaviour
 		//向下投射检测
 		var hitCount = this.NonAllocCast((Mathf.Abs(verticalMoveDirection) + Constants.MaxStepHeight + Constants.ColliderSpacing) * Vector3.down, horizontalDirection);
 		var grounded = false;
-		var closestRaycastHit = QuickSelect.SmallestK(this.CombinedRaycastHitsBuffer, hitCount, 0, RaycastUtils.RaycastHitComparer);
-		var activeCollider = this.Colliders[this.ColliderIndexMap[closestRaycastHit]];
-		//计算重叠
-		if (closestRaycastHit.distance == 0)
+		if (hitCount > 0)
 		{
-			var horizontalStep = false;
-			//如果水平方向有移动的话，就检测台阶
-			if (horizontalDirection.sqrMagnitude >= 0.000001f)
+
+			var closestRaycastHit = QuickSelect.SmallestK(this.CombinedRaycastHitsBuffer, hitCount, 0, RaycastUtils.RaycastHitComparer);
+			var activeCollider = this.Colliders[this.ColliderIndexMap[closestRaycastHit]];
+			//计算重叠
+			if (closestRaycastHit.distance == 0)
 			{
-				if (this.SingleCast(activeCollider, horizontalDirection, Vector3.zero))
+				var horizontalStep = false;
+				//如果水平方向有移动的话，就检测台阶
+				if (horizontalDirection.sqrMagnitude >= 0.000001f)
 				{
-					//计算击中点的相对位置
-					var groundPoint = this.transform.InverseTransformPoint(this.RaycastHit.point);
-					if (groundPoint.y <= Constants.MaxStepHeight + Constants.ColliderSpacing)
+					if (this.SingleCast(activeCollider, horizontalDirection, Vector3.zero))
 					{
-						//如果移动方向可以踩上去，且踩上去后没有碰撞，则是在台阶的情况（台阶范围内碰撞，都算接地）
-						if (this.OverlapCount(activeCollider, horizontalDirection + Vector3.up * (Constants.MaxStepHeight - Constants.ColliderSpacing)) == 0)
+						//计算击中点的相对位置
+						var groundPoint = this.transform.InverseTransformPoint(this.RaycastHit.point);
+						if (groundPoint.y <= Constants.MaxStepHeight + Constants.ColliderSpacing)
 						{
-							horizontalStep = true;
+							//如果移动方向可以踩上去，且踩上去后没有碰撞，则是在台阶的情况（台阶范围内碰撞，都算接地）
+							if (this.OverlapCount(activeCollider, horizontalDirection + Vector3.up * (Constants.MaxStepHeight - Constants.ColliderSpacing)) == 0)
+							{
+								horizontalStep = true;
+							}
 						}
 					}
 				}
-			}
-			var offset = Vector3.zero;
-			// 上台阶的情况下必定要计算新位移，所以跳过反穿透计算，减少计算量
-			var overlap = !horizontalStep && this.ComputePenetration(activeCollider, closestRaycastHit.collider, horizontalDirection, true, out offset);
-			if (overlap)
-			{
-				overlap = this.ComputePenetration(activeCollider, closestRaycastHit.collider, horizontalDirection, false, out offset);
-			}
+				var offset = Vector3.zero;
+				// 上台阶的情况下必定要计算新位移，所以跳过反穿透计算，减少计算量
+				var overlap = !horizontalStep && this.ComputePenetration(activeCollider, closestRaycastHit.collider, horizontalDirection, true, out offset);
+				if (overlap)
+				{
+					overlap = this.ComputePenetration(activeCollider, closestRaycastHit.collider, horizontalDirection, false, out offset);
+				}
 
-			//如果要上台阶，需要计算新位移
-			if (!overlap)
-			{
-				//通过反穿透的值，计算出地面的位置
-				var localOffset = this.transform.InverseTransformDirection(offset);
-				var verticalOffset = 0f;//地面的位置
-										//垂直方向上的反穿透先存起来，后面(在计算垂直碰撞时)统一计算
-				if (localOffset.y > 0)
+				//如果要上台阶，需要计算新位移
+				if (!overlap)
 				{
-					verticalOffset = localOffset.y;
-					localOffset.y = 0;
+					//通过反穿透的值，计算出地面的位置
+					var localOffset = this.transform.InverseTransformDirection(offset);
+					var verticalOffset = 0f;//地面的位置
+											//垂直方向上的反穿透先存起来，后面(在计算垂直碰撞时)统一计算
+					if (localOffset.y > 0)
+					{
+						verticalOffset = localOffset.y;
+						localOffset.y = 0;
+					}
+					//先根据反穿透量移动
+					moveDirection += this.transform.TransformDirection(localOffset);
+					//计算台阶
+					//角色反穿透水平移动后，加上一层台阶，向下投射，击中点是移动后的新的地面高度
+					if (this.SingleCast(activeCollider, Vector3.down * (Constants.MaxStepHeight + verticalOffset + Constants.ColliderSpacing),
+										Vector3.ProjectOnPlane(moveDirection, Vector3.up) + this.transform.up * (Constants.MaxStepHeight + verticalOffset + Constants.ColliderSpacing)))
+					{
+						//地面射线为踩上一阶台阶后向下投射的射线(为了赋给GroundRaycastHit)
+						closestRaycastHit = this.RaycastHit;
+					}
 				}
-				//先根据反穿透量移动
-				moveDirection += this.transform.TransformDirection(localOffset);
-				//计算台阶
-				//角色反穿透水平移动后，加上一层台阶，向下投射，击中点是移动后的新的地面高度
-				if (this.SingleCast(activeCollider, Vector3.down * (Constants.MaxStepHeight + verticalOffset + Constants.ColliderSpacing),
-									Vector3.ProjectOnPlane(moveDirection, Vector3.up) + this.transform.up * (Constants.MaxStepHeight + verticalOffset + Constants.ColliderSpacing)))
+				else
 				{
-					//地面射线为踩上一阶台阶后向下投射的射线(为了赋给GroundRaycastHit)
-					closestRaycastHit = this.RaycastHit;
+					// 进行了反穿透后还有重叠，这种情况下停止移动
+					moveDirection = Vector3.zero;
 				}
 			}
-			else
-			{
-				// 进行了反穿透后还有重叠，这种情况下停止移动
-				moveDirection = Vector3.zero;
-			}
+			//如果没碰撞，就是向下的射线，如果碰撞检测了，就是移动一层台阶再向下射
+			this.GroundRaycastHit = closestRaycastHit;
+			//投射的起点（最后一个参数为ture，否则一半以下都陷地的话，最近点会在上方，应当为下方的点）
+			//这个函数返回值不一定是最近点，当point在球体部分（胶囊体内部的球体也算）的下半部时，点的位置为（y=point向下与球的交点,xz=球心）
+			this.GroundRaycastOrigin = MathUtils.ClosestPointOnCollider(this.transform, activeCollider, this.GroundRaycastHit.point, moveDirection, false, true);
+			//距离地面的向量
+			var lenDir = this.transform.InverseTransformDirection(this.GroundRaycastHit.point - this.GroundRaycastOrigin);
+			//长度在皮肤宽度内，接地(实际陷地)，否则悬空
+			grounded = lenDir.y >= -this.SkinWidth;
 		}
-		//如果没碰撞，就是向下的射线，如果碰撞检测了，就是移动一层台阶再向下射
-		this.GroundRaycastHit = closestRaycastHit;
-		//投射的起点（最后一个参数为ture，否则一半以下都陷地的话，最近点会在上方，应当为下方的点）
-		//这个函数返回值不一定是最近点，当point在球体部分（胶囊体内部的球体也算）的下半部时，点的位置为（y=point向下与球的交点,xz=球心）
-		this.GroundRaycastOrigin = MathUtils.ClosestPointOnCollider(this.transform, activeCollider, this.GroundRaycastHit.point, moveDirection, false, true);
-		//距离地面的向量
-		var lenDir = this.transform.InverseTransformDirection(this.GroundRaycastHit.point - this.GroundRaycastOrigin);
-		//长度在皮肤宽度内，接地(实际陷地)，否则悬空
-		grounded = lenDir.y >= -this.SkinWidth;
 		this.ResetCombinedRaycastHits();
 
 		//更新接地体
@@ -928,13 +936,13 @@ public class CharacterLocomotion : MonoBehaviour
 				MathUtils.CapsuleColliderEndCaps(collider, collider.transform.position + offset, collider.transform.rotation, out firstEndCap, out secondEndCap);
 				//半径
 				float radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
-				hitNums = Physics.CapsuleCastNonAlloc(firstEndCap, secondEndCap, radius, direction.normalized,this.RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
+				hitNums = Physics.CapsuleCastNonAlloc(firstEndCap, secondEndCap, radius, direction.normalized, this.RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing, LayerMask.SolidObjectLayers, QueryTriggerInteraction.Ignore);
 			}
 			else
 			{//只剩下SphereCollider
 				SphereCollider collider = this.Colliders[i] as SphereCollider;
 				var radius = collider.radius * MathUtils.ColliderRadiusMultiplier(collider) - Constants.ColliderSpacing;
-				hitNums = Physics.SphereCastNonAlloc(collider.transform.TransformPoint(collider.center) + offset, radius, direction.normalized, this.RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
+				hitNums = Physics.SphereCastNonAlloc(collider.transform.TransformPoint(collider.center) + offset, radius, direction.normalized, this.RaycastHitsBuffer, direction.magnitude + Constants.ColliderSpacing, LayerMask.SolidObjectLayers, QueryTriggerInteraction.Ignore);
 			}
 			if (hitNums > 0)
 			{
@@ -953,7 +961,7 @@ public class CharacterLocomotion : MonoBehaviour
 					}
 
 					this.ColliderIndexMap.Add(this.RaycastHitsBuffer[j], i);
-					this.CombinedRaycastHitsBuffer[hitCount + j] =this.RaycastHitsBuffer[j];
+					this.CombinedRaycastHitsBuffer[hitCount + j] = this.RaycastHitsBuffer[j];
 					validHitCount += 1;
 				}
 				hitCount += validHitCount;
@@ -1025,13 +1033,13 @@ public class CharacterLocomotion : MonoBehaviour
 			Vector3 startEndCap, endEndCap;
 			var capsuleCollider = collider as CapsuleCollider;
 			MathUtils.CapsuleColliderEndCaps(capsuleCollider, collider.transform.position + offset, collider.transform.rotation, out startEndCap, out endEndCap);
-			return Physics.OverlapCapsuleNonAlloc(startEndCap, endEndCap, capsuleCollider.radius * MathUtils.ColliderRadiusMultiplier(capsuleCollider) - Constants.ColliderSpacing, this.OverlapColliderBuffer,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
+			return Physics.OverlapCapsuleNonAlloc(startEndCap, endEndCap, capsuleCollider.radius * MathUtils.ColliderRadiusMultiplier(capsuleCollider) - Constants.ColliderSpacing, this.OverlapColliderBuffer, LayerMask.SolidObjectLayers, QueryTriggerInteraction.Ignore);
 		}
 		else
 		{ // SphereCollider.
 			var sphereCollider = collider as SphereCollider;
 			return Physics.OverlapSphereNonAlloc(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, sphereCollider.radius * MathUtils.ColliderRadiusMultiplier(sphereCollider) - Constants.ColliderSpacing,
-													this.OverlapColliderBuffer,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
+													this.OverlapColliderBuffer, LayerMask.SolidObjectLayers, QueryTriggerInteraction.Ignore);
 		}
 	}
 	/// <summary>
@@ -1044,7 +1052,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <returns>是否推动</returns>
 	private bool PushRigidbody(Rigidbody targetRigidbody, Vector3 moveDirection, Vector3 point, float radius)
 	{
-		if (targetRigidbody.isKinematic|| !MathUtils.InLayerMask(targetRigidbody.gameObject.layer, LayerMask.SolidObjectLayers))
+		if (targetRigidbody.isKinematic || !MathUtils.InLayerMask(targetRigidbody.gameObject.layer, LayerMask.SolidObjectLayers))
 		{
 			return false;
 		}
@@ -1067,13 +1075,13 @@ public class CharacterLocomotion : MonoBehaviour
 			var capsuleCollider = collider as CapsuleCollider;
 			MathUtils.CapsuleColliderEndCaps(capsuleCollider, capsuleCollider.transform.position + offset, capsuleCollider.transform.rotation, out startEndCap, out endEndCap);
 			var radius = capsuleCollider.radius * MathUtils.ColliderRadiusMultiplier(capsuleCollider) - Constants.ColliderSpacing;
-			return Physics.CapsuleCast(startEndCap, endEndCap, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
+			return Physics.CapsuleCast(startEndCap, endEndCap, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing, LayerMask.SolidObjectLayers, QueryTriggerInteraction.Ignore);
 		}
 		else
 		{ // SphereCollider.
 			var sphereCollider = collider as SphereCollider;
 			var radius = sphereCollider.radius * MathUtils.ColliderRadiusMultiplier(sphereCollider) - Constants.ColliderSpacing;
-			return Physics.SphereCast(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing,LayerMask.SolidObjectLayers,QueryTriggerInteraction.Ignore);
+			return Physics.SphereCast(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing, LayerMask.SolidObjectLayers, QueryTriggerInteraction.Ignore);
 		}
 	}
 	/// <summary>
@@ -1103,27 +1111,32 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <param name="enable"></param>
 	public void EnableColliderCollisionLayer(bool enable)
 	{
-		if (this.CollisionLayerEnabled == enable) {
+		if (this.CollisionLayerEnabled == enable)
+		{
 			return;
 		}
 		this.CollisionLayerEnabled = enable;
-		if (enable) {
+		if (enable)
+		{
 			//如果开启，则将缓冲中的层级写回。
 			for (int i = 0; i < this.Colliders.Count; i++)
 			{
 				var collider = this.Colliders[i];
 				UnityEngine.LayerMask layer;
-				if( this.CollidersLayerCache.TryGetValue(collider, out layer)){
+				if (this.CollidersLayerCache.TryGetValue(collider, out layer))
+				{
 					collider.gameObject.layer = layer;
 				}
 			}
-		} else {
+		}
+		else
+		{
 			//否则备份层级
 			for (int i = 0; i < this.Colliders.Count; i++)
 			{
 				var collider = this.Colliders[i];
 				this.CollidersLayerCache[collider] = collider.gameObject.layer;
-				collider.gameObject.layer =LayerManager.IgnoreRaycast;
+				collider.gameObject.layer = LayerManager.IgnoreRaycast;
 			}
 		}
 	}
