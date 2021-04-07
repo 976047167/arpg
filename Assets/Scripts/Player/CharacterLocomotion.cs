@@ -165,6 +165,7 @@ public class CharacterLocomotion : MonoBehaviour
 
 		this.actions = new GameActionBase[0];
 		this.AddAction(ACTION_TYPE.StartMove);
+		this.AddAction(ACTION_TYPE.StopMove);
 	}
 
 	/// <summary>
@@ -188,7 +189,7 @@ public class CharacterLocomotion : MonoBehaviour
 	{
 		var clampValue = Mathf.Max(Mathf.Abs(direction.x), Mathf.Max(Mathf.Abs(direction.y), 1));
 		float y = Mathf.Clamp(direction.magnitude, -clampValue, clampValue);
-		this.InputVector.Set(0, y);
+		this.InputVector = new Vector2(0,y);
 	}
 
 

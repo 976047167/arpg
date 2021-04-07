@@ -15,7 +15,7 @@ public static class Notification
 		if(bindings == null) return; 
 		foreach (var callback in bindings)
 		{
-			callback();
+			(callback as Action)();
 		}
     }
     public static void RemoveBinding(int hash, Action callback)
@@ -36,7 +36,7 @@ public static class Notification
 		if(bindings == null) return; 
 		foreach (var callback in bindings)
 		{
-			callback(arg);
+			(callback as Action<T>)(arg);
 		}
     }
     public static void RemoveBinding<T>(int hash, Action<T> callback)
@@ -56,7 +56,7 @@ public static class Notification
 		if(bindings == null) return; 
 		foreach (var callback in bindings)
 		{
-			callback(arg1,arg2);
+			(callback as Action<T1,T2>)(arg1,arg2);
 		}
     }
     public static void RemoveBinding<T1, T2>(int hash, Action<T1, T2> callback)
@@ -103,7 +103,7 @@ public static class Notification
 		}
 		cbSet.Add(callback);
     }
-    private static HashSet<T> GetBinding<T>(int hash)
+    private static HashSet<object> GetBinding<T>(int hash)
     {
         Type t = typeof(T);
         Dictionary<int, HashSet<object>> bindings;
@@ -112,8 +112,7 @@ public static class Notification
 		HashSet<object> ret;
 		exit = bindings.TryGetValue(hash, out ret);
         if (!exit) return null;
-		return (HashSet<T>)(object)ret;
-
+		return ret;
     }
 
 }

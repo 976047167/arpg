@@ -3,8 +3,8 @@ namespace GameAction
 {
 	[GameActionType(ACTION_TYPE.StopMove)]
 	[StartType(START_TYPE.Automatic)]
-	[AnimatorIndex(6)]
-	public abstract class StopMove : GameActionBase
+	[AnimatorIndex(7)]
+	public class StopMove : GameActionBase
 	{
 		private bool Moving = false;
 		private bool Grounded = false;
@@ -38,8 +38,6 @@ namespace GameAction
 		/// 是否记录输入
 		/// </summary>
 		private bool AccumulateInputs = true;
-
-		protected abstract bool UseRawInput { get; }
 
 		public override void Initialize(CharacterLocomotion owner)
 		{
