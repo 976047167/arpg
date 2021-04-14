@@ -11,7 +11,7 @@ namespace GameAction
 	public class StartMove : GameActionBase
 	{
 		private bool moving = false;
-		private bool animationFinished = false;
+		private bool AnimationFinished = false;
 		private enum StartIndex
 		{
 			None,
@@ -32,22 +32,22 @@ namespace GameAction
 			RunBackwardTurnLeft,
 			RunBackwardTurnRight
 		}
-		public override void Initialize(CharacterLocomotion owner)
+		public override void Initialize(CharacterLocomotion owner,int priority)
 		{
-			base.Initialize(owner);
+			base.Initialize(owner,priority);
 			Notification.CreateBinding<CharacterLocomotion, bool>(GameEvent.OnMoving, this.onMoving);
 			Notification.CreateBinding<CharacterLocomotion,string>(GameEvent.AnimationEvent, this.OnAnimationEvent);
 		}
-		public override bool canActivate()
+		public override bool CanActivate()
 		{
-			if (!base.canActivate())
+			if (!base.CanActivate())
 			{
 				return false;
 			}
 
 			if (this.moving ) return false;
 			//无移动，不启动
-			if (this.ownerLocomotion.InputVector.magnitude == 0)
+			if (this.OwnerLocomotion.InputVector.magnitude == 0)
 			{
 				return false;
 			}
@@ -55,14 +55,14 @@ namespace GameAction
 			return true;
 		}
 
-		public override bool canDeactivate()
+		public override bool CanDeactivate(bool force = false)
 		{
-			if (!base.canDeactivate())
+			if (!base.CanDeactivate(force))
 			{
 				return false;
 			}
-			if(animationFinished)return true;
-			if (this.ownerLocomotion.InputVector.magnitude > 0)
+			if(this.AnimationFinished)return true;
+			if (this.OwnerLocomotion.InputVector.magnitude > 0)
 			{
 				return false;
 			}
@@ -71,7 +71,7 @@ namespace GameAction
 
 		public override void Activavte()
 		{
-			Vector2 inputValue = this.ownerLocomotion.InputVector;
+			Vector2 inputValue = this.OwnerLocomotion.InputVector;
 			float speed = Constants.SpeedAcceleration;
 			int moveArg = (int)StartIndex.None;
 			if (inputValue.x > speed && inputValue.y > speed)
@@ -139,20 +139,20 @@ namespace GameAction
 				moveArg = (int)StartIndex.WalkStrafeLeft;
 			}
 			this.AnimatorInt = moveArg;
-			this.animationFinished = false;
+			this.AnimationFinished = false;
 
 			base.Activavte();
 		}
 		private void onMoving(CharacterLocomotion locomotion,bool state)
 		{
-			if(this.ownerLocomotion != locomotion) return;
+			if(this.OwnerLocomotion != locomotion) return;
 			this.moving = state;
 		}
 		private void OnAnimationEvent(CharacterLocomotion locomotion,string evnet)
 		{
-			if(this.ownerLocomotion != locomotion) return;
+			if(this.OwnerLocomotion != locomotion) return;
 			if(evnet != "OnAnimatorStartMovementComplete")return;
-			this.animationFinished = true;
+			this.AnimationFinished = true;
 		}
 		public override void Release()
 		{

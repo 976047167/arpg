@@ -36,39 +36,54 @@ namespace GameAction
 		public STOP_TYPE StopType;
 		public float ActiveTime { get; private set; }
 		public float ActiveCount { get; private set; }
-		protected CharacterLocomotion ownerLocomotion;
+		protected CharacterLocomotion OwnerLocomotion;
 		protected CharacterLocomotion playerAnimator;
 		public virtual int AnimatorInt { get; internal set; }
 		public virtual int AnimatorIndex { get; internal set; }
 		public virtual float AnimatorFloat { get; internal set; }
 		protected GameObject gameObject;
 		protected Transform transform;
+		/// <summary>
+		/// 优先级
+		/// </summary>
+		public int PriorityIndex{ get; private set; }
+		/// <summary>
+		/// 是否可以并行
+		/// </summary>
+		public virtual bool IsConcurrent {get { return false; } }
 
 		public virtual ACTION_TYPE type {get; internal set;}
-		public virtual void Initialize(CharacterLocomotion owner)
+		public virtual void Initialize(CharacterLocomotion owner,int priority)
 		{
-			this.ownerLocomotion = owner;
+			this.OwnerLocomotion = owner;
+			this.PriorityIndex = priority;
 			this.ActiveCount = 0;
 			this.gameObject = owner.gameObject;
 			this.transform = owner.transform;
 			this.playerAnimator = gameObject.GetComponent<CharacterLocomotion>();
 		}
-		public virtual bool canActivate()
+		public virtual bool CanActivate()
 		{
 			if(this.StartType != START_TYPE.Automatic) return false;
 			return true;
 		}
-		public virtual bool canActivate(PlayerInput input)
+		public virtual bool CanActivate(PlayerInput input)
 		{
 			if(this.StartType == START_TYPE.Automatic) return false;
 			return true;
 		}
-		public virtual bool canDeactivate()
+		
+		/// <summary>
+		/// 检测是否可以停止行为
+		/// </summary>
+		/// <param name="force">通常只有行为冲突的时候，会根据优先级强制停止一个</param>
+		public virtual bool CanDeactivate(bool force = false)
 		{
+			if(force)return true;
 			if(this.StopType != STOP_TYPE.Automatic) return false;
 			return true;
 		}
-		public virtual bool canDeactivate(PlayerInput input)
+		public virtual bool CanDeactivate(PlayerInput input)
 		{
 			if(this.StopType == STOP_TYPE.Automatic) return false;
 			return true;
@@ -79,13 +94,17 @@ namespace GameAction
 			this.ActiveCount++;
 			this.Active = true;
 		}
-		public virtual void Deactivate()
+		/// <summary>
+		/// 停止行为
+		/// </summary>
+		/// <param name="force">通常只有行为冲突的时候，会根据优先级强制停止一个</param>
+		public virtual void Deactivate(bool force = false)
 		{
 			this.Active = false;
 		}
 
 		public virtual void Release() { }
 		public virtual void Update(){ }
-		public virtual void DeactiveUpdate(){ }
+		public virtual void UpdateInDeactive(){ }
 	}
 }

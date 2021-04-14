@@ -6,5 +6,6 @@ namespace GameAction
 		NULL = 0,
 		StartMove = 1,
 		StopMove = 2,
+		SetDefauletValue = 3,
 	}
 }

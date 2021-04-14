@@ -160,10 +160,11 @@ public class CharacterLocomotion : MonoBehaviour
 		this.RaycastHitsBuffer = new RaycastHit[100];
 		this.CombinedRaycastHitsBuffer = new RaycastHit[100 * this.Colliders.Count];
 		this.OverlapColliderBuffer = new Collider[100];
-
-
-
 		this.actions = new GameActionBase[0];
+
+
+
+		this.AddAction(ACTION_TYPE.SetDefauletValue);
 		this.AddAction(ACTION_TYPE.StartMove);
 		this.AddAction(ACTION_TYPE.StopMove);
 	}
@@ -236,11 +237,32 @@ public class CharacterLocomotion : MonoBehaviour
 	/// 角色尝试启动行为
 	/// </summary>
 	/// <param name="action">被启动的行为</param>
-	public void tryActiveAction(GameActionBase action)
+	public void TryActiveAction(GameActionBase action)
 	{
 		if (!action.Enabled) return;
-		if (!action.canActivate()) return;
+		if (!action.CanActivate()) return;
 		if (action.Active) return;
+		//如果action不可并行，就根据优先级判定
+		if (action.IsConcurrent)
+		{
+			for (int i = 0; i < this.actions.Length; i++)
+			{
+				var a = this.actions[i];
+				if (a == action) continue;
+				if (!a.Enabled) continue;
+				if (!a.Active) continue;
+				if (a.IsConcurrent) continue;
+				if (a.PriorityIndex < action.PriorityIndex)
+				{
+					//优先级低的强制关闭
+					this.TryDeactivateAction(a, true);
+					//理论上不可并行的action只有一个，这里可以break减少后续运算
+					break;
+				}else{
+					return;
+				}
+			}
+		}
 		action.Activavte();
 		this.UpdateActionAnimator();
 	}
@@ -248,12 +270,13 @@ public class CharacterLocomotion : MonoBehaviour
 	/// 角色尝试停止行为
 	/// </summary>
 	/// <param name="action">被停止的行为</param>
-	public void tryDeactivateAction(GameActionBase action)
+	/// <param name="force">是否强行停止</param>
+	public void TryDeactivateAction(GameActionBase action,bool force = false)
 	{
 		if (!action.Enabled) return;
-		if (!action.canDeactivate()) return;
+		if (!action.CanDeactivate(force)) return;
 		if (!action.Active) return;
-		action.Deactivate();
+		action.Deactivate(force);
 		this.UpdateActionAnimator();
 	}
 
@@ -271,16 +294,16 @@ public class CharacterLocomotion : MonoBehaviour
 			if (!action.Enabled) continue;
 			if (action.Active)
 			{
-				if (action.canDeactivate(input))
+				if (action.CanDeactivate(input))
 				{
-					this.tryDeactivateAction(action);
+					this.TryDeactivateAction(action);
 				}
 			}
 			else
 			{
-				if (action.canActivate(input))
+				if (action.CanActivate(input))
 				{
-					this.tryActiveAction(action);
+					this.TryActiveAction(action);
 				}
 			}
 		}
@@ -299,11 +322,11 @@ public class CharacterLocomotion : MonoBehaviour
 			if (!action.Enabled) continue;
 			if (action.Active && action.StopType == STOP_TYPE.Automatic)
 			{
-				this.tryDeactivateAction(action);
+				this.TryDeactivateAction(action);
 			}
 			else if (!action.Active && action.StartType == START_TYPE.Automatic)
 			{
-				this.tryActiveAction(action);
+				this.TryActiveAction(action);
 			}
 			if (action.Active)
 			{
@@ -311,7 +334,7 @@ public class CharacterLocomotion : MonoBehaviour
 			}
 			else
 			{
-				action.DeactiveUpdate();
+				action.UpdateInDeactive();
 			}
 		}
 
@@ -343,31 +366,32 @@ public class CharacterLocomotion : MonoBehaviour
 		if (!this.isAnimatorDirty) return;
 		this.isAnimatorDirty = false;
 		int idx = 0;
-		bool idxChange = false;
+		int idxChangePriority = -1;
 		int argInt = 0;
-		bool intChange = false;
+		int intChangePriority = -1;
 		float argFloat = 0f;
-		bool floatChange = false;
+		int floatChangePriority= -1;
+
+		//即使action可以共存，动画也只有一个，按照优先级来决定动画
 		for (int i = 0; i < this.actions.Length; i++)
 		{
 			var action = this.actions[i];
 			if (!action.Active) continue;
-			if (!idxChange && action.AnimatorIndex != -1)
+			if (idxChangePriority<action.PriorityIndex  && action.AnimatorIndex != -1)
 			{
 				idx = action.AnimatorIndex;
-				idxChange = true;
+				idxChangePriority = action.PriorityIndex;
 			}
 			//idx可能为0，后续数值为0状态下的动画参数
-			if (!intChange && action.AnimatorInt != -1)
+			if (intChangePriority<action.PriorityIndex && action.AnimatorInt != -1)
 			{
 				argInt = action.AnimatorInt;
-				intChange = true;
-
+				intChangePriority = action.PriorityIndex;
 			}
-			if (!floatChange && action.AnimatorFloat != -1)
+			if (floatChangePriority<action.PriorityIndex && action.AnimatorFloat != -1)
 			{
 				argFloat = action.AnimatorFloat;
-				floatChange = true;
+				floatChangePriority = action.PriorityIndex;
 			}
 		}
 		this.animator.SetAnimatorIdx(idx);
@@ -381,7 +405,7 @@ public class CharacterLocomotion : MonoBehaviour
 		int length = this.actions.Length;
 		Array.Resize(ref this.actions, length + 1);
 		this.actions[length] = action;
-		action.Initialize(this);
+		action.Initialize(this,length);
 	}
 	private void UpdateMoveState()
 	{
