@@ -56,6 +56,10 @@ public class CharacterAnimator : MonoBehaviour
     {
         return this._animator.deltaPosition;
     }
+    public Quaternion GetDeltaRotation()
+    {
+        return this._animator.deltaRotation;
+    }
     public bool SetHorizontalMovementParameter(float value, float timeScale)
     {
         var change = this.HorizontalMovement != value;

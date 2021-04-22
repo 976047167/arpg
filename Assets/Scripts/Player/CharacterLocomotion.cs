@@ -25,7 +25,18 @@ public class CharacterLocomotion : MonoBehaviour
 	private bool Moving = false;
 	private Transform cameraTrans;
 
+	/// <summary>
+	/// animator这一帧传过来的位移值
+	/// </summary>
 	private Vector3 AnimatorDeltaPosition = Vector3.zero;
+	/// <summary>
+	/// animator这一帧传过来的角度四元数
+	/// </summary>
+	private Quaternion AnimatorDeltaRotation = Quaternion.identity;
+	/// <summary>
+	/// 是否使用从animatior传来的角度值，否的话，使用鼠标摇杆指向的角度值
+	/// </summary>
+	public bool UseAnimatorRotation;
 	/// <summary>
 	/// 用来计算的质量值，不是给刚体组件用的
 	/// </summary>
@@ -227,11 +238,6 @@ public class CharacterLocomotion : MonoBehaviour
 		this.UpdateAutoActions();
 		this.UpdateAnimator();
 		this.UpdateMoveState();
-		if (!this.isPlayer)
-		{
-			//玩家控制的角色在onAnimatorMove里调用
-			this.UpdatePosAndRota();
-		}
 	}
 	/// <summary>
 	/// 角色尝试启动行为
@@ -420,9 +426,16 @@ public class CharacterLocomotion : MonoBehaviour
 
 	private void OnAnimatorMove()
 	{
-		this.AnimatorDeltaPosition += this.animator.GetDeltaPos();
-		if (Time.deltaTime == 0) return;
-		if (this.AnimatorDeltaPosition.magnitude == 0) return;
+		// 暂停的情况下不更新
+		if (Time.deltaTime == 0||this.TimeScale == 0 || Time.timeScale == 0) return;
+		var pos = this.animator.GetDeltaPos();
+		if (pos.magnitude > 0) {
+			this.AnimatorDeltaPosition += pos ;
+		}
+		var rotation = this.animator.GetDeltaRotation();
+		if(rotation != Quaternion.identity){
+			this.AnimatorDeltaRotation *= rotation;
+		}
 		this.UpdatePosAndRota();
 
 	}
@@ -442,7 +455,14 @@ public class CharacterLocomotion : MonoBehaviour
 		//当前角度
 		Quaternion curRoation = transform.rotation;
 		//要转到的角度
-		Quaternion targetRotation = Quaternion.Slerp(curRoation, curRoation * Quaternion.Euler(this.InputRotation), Constants.RoundSpeed * TimeUtility.DeltaTimeScaled * this.TimeScale);
+		Quaternion targetRotation;
+		// 某些action会导致模型转向，此时使用animator的角度计算
+		if(this.UseAnimatorRotation){
+			targetRotation = curRoation * this.AnimatorDeltaRotation;
+			this.AnimatorDeltaRotation = Quaternion.identity;
+		}else{
+			targetRotation = Quaternion.Slerp(curRoation, curRoation * Quaternion.Euler(this.InputRotation), Constants.RoundSpeed * TimeUtility.DeltaTimeScaled * this.TimeScale);
+		}
 		//两个角度的差值 力矩
 		Quaternion ret = Quaternion.Inverse(curRoation) * targetRotation;
 
