@@ -41,7 +41,8 @@ namespace GameAction
 		/// <summary>
 		/// 在canactive成功足够的次数后才启动
 		/// </summary>
-		private int StartCount = 7;
+		private int StartCount = 2;
+		private int RequiredStartCount = 7;
 		private Vector2 AverageInput;
 		private bool AnimationFinished;
 
@@ -52,6 +53,7 @@ namespace GameAction
 			Notification.CreateBinding<CharacterLocomotion, bool>(GameEvent.OnCharacterGroundedHash, this.OnGrounded);
 			Notification.CreateBinding<CharacterLocomotion, string>(GameEvent.AnimationEvent, this.OnAnimationEvent);
 			this.Inputs = new Vector2[this.MaxInputCount];
+			this.StartCount = this.RequiredStartCount;
 		}
 
 		public override void UpdateInDeactive()
@@ -99,7 +101,7 @@ namespace GameAction
                 return false;
             }
 
-            if (this.OwnerLocomotion.RawInputVector.sqrMagnitude > 0.01f) {
+            if (input.sqrMagnitude > 0.01f) {
                 return false;
             }
 
@@ -137,7 +139,7 @@ namespace GameAction
 			if(this.StartCount ==0){
 				this.ResetStoredInputs();
 			}
-			this.StartCount = this.MaxInputCount;
+			this.StartCount = this.RequiredStartCount;
 		}
 
 
