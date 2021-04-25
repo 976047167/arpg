@@ -48,7 +48,10 @@ namespace GameAction
 		/// </summary>
 		public int PriorityIndex{ get; private set; }
 		/// <summary>
-		/// 是否可以并行
+		/// 动作分为独占动作和并行动作。
+		/// 独占动作启动时，根据优先级判断，如果高于在运行的所有动作，那么独占动作启动，关闭其他动作，否则启动失败。
+		/// 并行动作启动时，如果有独占动作，根据优先级是否关闭独占动作。之后可以与其他并行动作一起运行
+		/// 即使有多个并行动作，但是animator只有一个，仍然以优先级判断动画
 		/// </summary>
 		public virtual bool IsConcurrent {get { return false; } }
 
