@@ -16,8 +16,9 @@ class Point:
 	def Empyt():
 		return Point(9999,9999)
 class Grid:
-	def __init__(self,array,reverse = False):
+	def __init__(self,array):
 		self.arr = np.empty(array.shape,dtype=Point)
+		self.rev_arr = np.empty(array.shape,dtype=Point)
 		self.height = self.arr.shape[0]
 		self.width = self.arr.shape[1]
 		x = 0
@@ -25,27 +26,37 @@ class Grid:
 			y = 0
 			while(y<self.height):
 				pixel = array[y][x]
-				if((pixel<128 )^ reverse ):
+				if((pixel<128 )):
 					self.put(x,y,Point.Inside())
+					self.put(x,y,Point.Empyt(),True)
 				else:
 					self.put(x,y,Point.Empyt())
+					self.put(x,y,Point.Inside(),True)
 				y+=1
 			x+=1
-	def get(self,x,y):
+	def get(self,x,y,reverse = False):
 		if(x<0 or y<0 or x>=self.width or y>=self.height):
 			return Point.Empyt()
 		else:
-			return self.arr[y,x]
-	def put(self,x,y,p):
-		self.arr[y][x] = p
+			if (reverse):
+				return self.rev_arr[y][x]
+			return self.arr[y][x]
+	def put(self,x,y,p,reverse = False):
+		if(reverse):
+			self.rev_arr[y][x]=p
+		else:
+			self.arr[y][x] = p
 	def compare(self,x,y,dx,dy):
 		point =  self.get(x,y)
 		other = self.get(x+dx,y+dy)
 		near = other.newClone(dx,dy)
-		# if(near.sqrLength<0):
-		# 	print(x,y)
 		if(point.sqrLength >= near.sqrLength):
 			self.put(x,y,near)
+		point =  self.get(x,y,True)
+		other = self.get(x+dx,y+dy,True)
+		near = other.newClone(dx,dy)
+		if(point.sqrLength >= near.sqrLength):
+			self.put(x,y,near,True)
 	def GenerateSDF(self):
 		y = 0
 		while(y<self.height):
@@ -76,29 +87,27 @@ class Grid:
 				self.compare(x,y,-1,0)
 				x += 1
 			y-=1
+		ret = np.empty(self.arr.shape)
+		y = self.height -1
+		while(y>=0):
+			x = self.width -1
+			while(x>=0):
+				# print(x,y)
+				dist1 = math.sqrt(self.get(x,y).sqrLength)
+				dist2 = math.sqrt(self.get(x,y,True).sqrLength)
+				dist = (dist1 - dist2)*3+128
+				ret[y][x] = dist
+				x-=1
+			y-=1
+		im_ret = Image.fromarray(ret).convert('L')
+		return im_ret
 
 
 im = Image.open("test.bmp")
 R= im.split()[0]
 arr = np.array(R)
-grid1 = Grid(arr)
-grid2 = Grid(arr,True)
-grid1.GenerateSDF()
-grid2.GenerateSDF()
-ret = np.empty(arr.shape)
-y = arr.shape[0]-1
-while(y>=0):
-	x = arr.shape[1]-1
-	while(x>=0):
-		# print(x,y)
-		# print(grid1.get(x,y).sqrLength)
-		dist1 = math.sqrt(grid1.get(x,y).sqrLength)
-		dist2 = math.sqrt(grid2.get(x,y).sqrLength)
-		dist = (dist1 - dist2)*3+128
-		ret[y][x] = dist
-		x-=1
-	y-=1
-new_im = Image.fromarray(ret).convert('L')
+grid = Grid(arr)
+new_im  = grid.GenerateSDF()
 new_im.show()
 print(new_im.getbands(), new_im.size, new_im.mode)
 	
