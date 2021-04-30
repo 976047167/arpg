@@ -36,7 +36,11 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <summary>
 	/// 是否使用从animatior传来的角度值，否的话，使用鼠标摇杆指向的角度值
 	/// </summary>
-	public bool UseAnimatorRotation;
+	public bool UseAnimatorRotation = false;
+	/// <summary>
+	/// 是否使用从animatior传来的位置值
+	/// </summary>
+	public bool UseAnimatorPosition = true;
 	/// <summary>
 	/// 用来计算的质量值，不是给刚体组件用的
 	/// </summary>
@@ -110,7 +114,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// </summary>
 	private Transform GroundHitTransform;
 	private float SlopeFactor = 1.0f;
-	private float SkinWidth = 0.08f;
+	public float SkinWidth { get; private set; } = 0.08f;
 	//减少gc用的变量，通常是Singlecast的结果值
 	private RaycastHit RaycastHit;
 	//用来手动计算击中法线的变量
@@ -201,7 +205,7 @@ public class CharacterLocomotion : MonoBehaviour
 	{
 		var clampValue = Mathf.Max(Mathf.Abs(direction.x), Mathf.Max(Mathf.Abs(direction.y), 1));
 		float y = Mathf.Clamp(direction.magnitude, -clampValue, clampValue);
-		this.InputVector = new Vector2(0,y);
+		this.InputVector = new Vector2(0, y);
 	}
 
 
@@ -264,7 +268,9 @@ public class CharacterLocomotion : MonoBehaviour
 					this.TryDeactivateAction(a, true);
 					//理论上不可并行的action只有一个，这里可以break减少后续运算
 					break;
-				}else{
+				}
+				else
+				{
 					return;
 				}
 			}
@@ -277,7 +283,7 @@ public class CharacterLocomotion : MonoBehaviour
 	/// </summary>
 	/// <param name="action">被停止的行为</param>
 	/// <param name="force">是否强行停止</param>
-	public void TryDeactivateAction(GameActionBase action,bool force = false)
+	public void TryDeactivateAction(GameActionBase action, bool force = false)
 	{
 		if (!action.Enabled) return;
 		if (!action.CanDeactivate(force)) return;
@@ -376,25 +382,25 @@ public class CharacterLocomotion : MonoBehaviour
 		int argInt = 0;
 		int intChangePriority = -1;
 		float argFloat = 0f;
-		int floatChangePriority= -1;
+		int floatChangePriority = -1;
 
 		//即使action可以共存，动画也只有一个，按照优先级来决定动画
 		for (int i = 0; i < this.actions.Length; i++)
 		{
 			var action = this.actions[i];
 			if (!action.Active) continue;
-			if (idxChangePriority<action.PriorityIndex  && action.AnimatorIndex != -1)
+			if (idxChangePriority < action.PriorityIndex && action.AnimatorIndex != -1)
 			{
 				idx = action.AnimatorIndex;
 				idxChangePriority = action.PriorityIndex;
 			}
 			//idx可能为0，后续数值为0状态下的动画参数
-			if (intChangePriority<action.PriorityIndex && action.AnimatorInt != -1)
+			if (intChangePriority < action.PriorityIndex && action.AnimatorInt != -1)
 			{
 				argInt = action.AnimatorInt;
 				intChangePriority = action.PriorityIndex;
 			}
-			if (floatChangePriority<action.PriorityIndex && action.AnimatorFloat != -1)
+			if (floatChangePriority < action.PriorityIndex && action.AnimatorFloat != -1)
 			{
 				argFloat = action.AnimatorFloat;
 				floatChangePriority = action.PriorityIndex;
@@ -411,7 +417,7 @@ public class CharacterLocomotion : MonoBehaviour
 		int length = this.actions.Length;
 		Array.Resize(ref this.actions, length + 1);
 		this.actions[length] = action;
-		action.Initialize(this,length);
+		action.Initialize(this, length);
 	}
 	private void UpdateMoveState()
 	{
@@ -427,13 +433,15 @@ public class CharacterLocomotion : MonoBehaviour
 	private void OnAnimatorMove()
 	{
 		// 暂停的情况下不更新
-		if (Time.deltaTime == 0||this.TimeScale == 0 || Time.timeScale == 0) return;
+		if (Time.deltaTime == 0 || this.TimeScale == 0 || Time.timeScale == 0) return;
 		var pos = this.animator.GetDeltaPos();
-		if (pos.magnitude > 0) {
-			this.AnimatorDeltaPosition += pos ;
+		if (pos.magnitude > 0)
+		{
+			this.AnimatorDeltaPosition += pos;
 		}
 		var rotation = this.animator.GetDeltaRotation();
-		if(rotation != Quaternion.identity){
+		if (rotation != Quaternion.identity)
+		{
 			this.AnimatorDeltaRotation *= rotation;
 		}
 		this.UpdatePosAndRota();
@@ -457,10 +465,13 @@ public class CharacterLocomotion : MonoBehaviour
 		//要转到的角度
 		Quaternion targetRotation;
 		// 某些action会导致模型转向，此时使用animator的角度计算
-		if(this.UseAnimatorRotation){
+		if (this.UseAnimatorRotation)
+		{
 			targetRotation = curRoation * this.AnimatorDeltaRotation;
 			this.AnimatorDeltaRotation = Quaternion.identity;
-		}else{
+		}
+		else
+		{
 			targetRotation = Quaternion.Slerp(curRoation, curRoation * Quaternion.Euler(this.InputRotation), Constants.RoundSpeed * TimeUtility.DeltaTimeScaled * this.TimeScale);
 		}
 		//两个角度的差值 力矩
@@ -1114,21 +1125,41 @@ public class CharacterLocomotion : MonoBehaviour
 	/// <returns></returns>
 	private bool SingleCast(Collider collider, Vector3 direction, Vector3 offset)
 	{
+		return this.SingleCast(collider, direction, offset, LayerMask.SolidObjectLayers, ref this.RaycastHit);
+	}
+	private bool SingleCast(Collider collider, Vector3 direction, Vector3 offset, int layers, ref RaycastHit result)
+	{
 		if (collider is CapsuleCollider)
 		{
 			Vector3 startEndCap, endEndCap;
 			var capsuleCollider = collider as CapsuleCollider;
 			MathUtils.CapsuleColliderEndCaps(capsuleCollider, capsuleCollider.transform.position + offset, capsuleCollider.transform.rotation, out startEndCap, out endEndCap);
 			var radius = capsuleCollider.radius * MathUtils.ColliderRadiusMultiplier(capsuleCollider) - Constants.ColliderSpacing;
-			return Physics.CapsuleCast(startEndCap, endEndCap, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing, LayerMask.SolidObjectLayers, QueryTriggerInteraction.Ignore);
+			return Physics.CapsuleCast(startEndCap, endEndCap, radius, direction.normalized, out result, direction.magnitude + Constants.ColliderSpacing, layers, QueryTriggerInteraction.Ignore);
 		}
 		else
 		{ // SphereCollider.
 			var sphereCollider = collider as SphereCollider;
 			var radius = sphereCollider.radius * MathUtils.ColliderRadiusMultiplier(sphereCollider) - Constants.ColliderSpacing;
-			return Physics.SphereCast(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, radius, direction.normalized, out this.RaycastHit, direction.magnitude + Constants.ColliderSpacing, LayerMask.SolidObjectLayers, QueryTriggerInteraction.Ignore);
+			return Physics.SphereCast(sphereCollider.transform.TransformPoint(sphereCollider.center) + offset, radius, direction.normalized, out result, direction.magnitude + Constants.ColliderSpacing, layers, QueryTriggerInteraction.Ignore);
 		}
 	}
+
+	public bool SingleCast(Vector3 direction, Vector3 offset, int layers, ref RaycastHit result)
+	{
+		for (int i = 0; i < this.Colliders.Count; ++i)
+		{
+			var colider = this.Colliders[i];
+			if (this.SingleCast(colider, direction, offset, layers, ref result))
+			{
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/// <summary>
 	/// 清空buffer，一般和NonAllocCast()成对使用
 	/// </summary>

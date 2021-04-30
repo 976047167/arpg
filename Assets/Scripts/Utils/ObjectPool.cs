@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 using System;
 using System.Collections.Generic;
 /// <summary>
-/// It is relatively expensive to instantiate new objects so reuse the objects when possible by placing them in a pool.
+/// 常用对象池
 /// </summary>
 public class ObjectPool : MonoBehaviour
 {

@@ -29,6 +29,9 @@ public class PlayerInput : MonoBehaviour
 		return this.CurrentLookVector;
 	}
 
+	public bool GetJump(){
+		return Input.GetKeyDown(KeyCode.Space);
+	}
     private void Update()
     {
         float x = Input.GetAxisRaw("Horizontal");

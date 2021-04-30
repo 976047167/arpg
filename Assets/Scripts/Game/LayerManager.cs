@@ -68,6 +68,72 @@ public class LayerManager : MonoBehaviour
 		Physics.IgnoreLayerCollision(Overlay, SubCharacter);
 		Physics.IgnoreLayerCollision(Overlay, Character);
 	}
+	/// <summary>
+	///	在两个碰撞器之间相互添加碰撞忽略
+	/// </summary>
+	/// <param name="mainCollider"></param>
+	/// <param name="otherCollider"></param>
+	public static void IgnoreCollision(Collider mainCollider, Collider otherCollider)
+	{
+		if (s_IgnoreCollisionMap == null)
+		{
+			s_IgnoreCollisionMap = new Dictionary<Collider, List<Collider>>();
+		}
+
+		List<Collider> colliderList;
+		if (!s_IgnoreCollisionMap.TryGetValue(mainCollider, out colliderList))
+		{
+			colliderList = new List<Collider>();
+			s_IgnoreCollisionMap.Add(mainCollider, colliderList);
+		}
+		colliderList.Add(otherCollider);
+
+		if (!s_IgnoreCollisionMap.TryGetValue(otherCollider, out colliderList))
+		{
+			colliderList = new List<Collider>();
+			s_IgnoreCollisionMap.Add(otherCollider, colliderList);
+		}
+		colliderList.Add(mainCollider);
+
+		Physics.IgnoreCollision(mainCollider, otherCollider);
+	}
+
+	/// <summary>
+	/// 消除碰撞器身上所有在缓存中储存的忽略，并且被忽略者也消除
+	/// </summary>
+	/// <param name="mainCollider"></param>
+	public static void RevertCollision(Collider mainCollider)
+	{
+		if(s_IgnoreCollisionMap == null) return;
+		List<Collider> colliderList;
+		List<Collider> otherColliderList;
+
+		if (s_IgnoreCollisionMap.TryGetValue(mainCollider, out colliderList))
+		{
+			for (int i = 0; i < colliderList.Count; ++i)
+			{
+				if (!mainCollider.enabled || !mainCollider.gameObject.activeInHierarchy || !colliderList[i].enabled || !colliderList[i].gameObject.activeInHierarchy)
+				{
+					continue;
+				}
+
+				Physics.IgnoreCollision(mainCollider, colliderList[i], false);
+
+				if (s_IgnoreCollisionMap.TryGetValue(colliderList[i], out otherColliderList))
+				{
+					for (int j = 0; j < otherColliderList.Count; ++j)
+					{
+						if (otherColliderList[j].Equals(mainCollider))
+						{
+							otherColliderList.RemoveAt(j);
+							break;
+						}
+					}
+				}
+			}
+			colliderList.Clear();
+		}
+	}
 
 	private void SceneUnloaded(Scene scene)
 	{
